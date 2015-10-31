@@ -1,0 +1,15 @@
+9e1388a96fc2b37f7d6d1730b1f8288f *ChangeLog
+016a2035f467b4cb034ee2a173179f47 *DESCRIPTION
+91c90fa3165f78873e325300c6f30828 *NAMESPACE
+b74bddb95a502401938c5737ffcb8802 *R/plot.reReg.R
+dd8f0af1a2d5e5742ef3327d7d3855b7 *R/reReg.R
+74cdbd87132f51ad4c930df162e7a063 *R/reSurv.R
+0eb78907e089fed973299c6988e182e6 *R/summary.R
+b81af115c94af71ee49b52dba2379e77 *data/readmission.rda
+2e7a6b381aacd1eb73f39a63db20d463 *man/plot.reReg.Rd
+fbb92aaf9aaeb841d5d2a34c9b55cf35 *man/reReg-package.Rd
+19e79e98b02b14da3f5f88072314609c *man/reReg.Rd
+7d523b233bc2225d589c0099e2df5e14 *man/reSurv.Rd
+e9602c92c01fa0af0f01aeed2ef54200 *man/readmission.Rd
+63a52447abae4d6cc78afc629b1db0eb *src/Ghosh.c
+a54e21c29385ed71357cedf662988d0b *src/reReg.c

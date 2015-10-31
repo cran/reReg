@@ -1,0 +1,16 @@
+useDynLib(reReg)
+importFrom("graphics", "lines", "par", "plot", "title")
+importFrom("stats", "approx", "ksmooth", "lm", "model.extract",
+           "model.matrix", "pnorm", "printCoefmat", "quantile",
+           "rbinom", "rexp", "rgamma", "rgeom", "rlnorm", "rnorm",
+           "rpois", "runif", "rweibull", "var")
+importFrom("BB", BBsolve, dfsane)
+importFrom("SQUAREM", squarem)
+importFrom("MASS", ginv)
+importFrom("survival", Surv)
+importFrom("aftgee", aftsrr)
+export(reSurv, is.reSurv, reReg, plot.reReg)
+S3method(plot, reReg)
+S3method(print, reReg)
+S3method(summary, reReg)
+S3method(print, summary.reReg)
