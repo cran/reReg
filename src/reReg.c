@@ -146,36 +146,42 @@ void sarm2(double *X, double *T, double *Y, double *weights,
   res;
 }
 
-void alphaEq1(double *X, double *Lambda, double *weights, 
-	      int *mt, int *n, int *p, int *B, 
-	      double *res) {
-  int i, j, r, b, iId = 0, jId = 0; 
-  for (b = 0; b < *B; b++) {
-    for (i = 0; i < *n; i++) {
-      for (j = 0; j < *n; j++) {
-	for (r = 0; r < *p; r++) {
-	  if (Lambda[i] != 0 && Lambda[j] != 0)
-	    res[r + b * *p] += X[i + r * *n] * weights[i + b * *n] * weights[j + b * *n] * (mt[i] / Lambda[i] -  mt[j] / Lambda[j]);
-	  if (Lambda[i] != 0 && Lambda[j] == 0)
-	    res[r + b * *p] += X[i + r * *n] * weights[i + b * *n] * weights[j + b * *n] * (mt[i] / Lambda[i]);
-	  if (Lambda[i] == 0 && Lambda[j] != 0)
-	    res[r + b * *p] += X[i + r * *n] * weights[i + b * *n] * weights[j + b * *n] * (0 - mt[j] / Lambda[j]);
-	}
-      }
-    }
-  }
-  res;
-}		 
+/* void alphaEq1(double *X, double *Lambda, double *weights,  */
+/* 	      int *mt, int *n, int *p, int *B,  */
+/* 	      double *res) { */
+/*   int i, j, r, b, iId = 0, jId = 0;  */
+/*   for (b = 0; b < *B; b++) { */
+/*     for (i = 0; i < *n; i++) { */
+/*       for (j = 0; j < *n; j++) { */
+/* 	for (r = 0; r < *p; r++) { */
+/* 	  if (Lambda[i] != 0 && Lambda[j] != 0) */
+/* 	    res[r + b * *p] += X[i + r * *n] * weights[i + b * *n] * weights[j + b * *n] * (mt[i] / Lambda[i] -  mt[j] / Lambda[j]); */
+/* 	  if (Lambda[i] != 0 && Lambda[j] == 0) */
+/* 	    res[r + b * *p] += X[i + r * *n] * weights[i + b * *n] * weights[j + b * *n] * (mt[i] / Lambda[i]); */
+/* 	  if (Lambda[i] == 0 && Lambda[j] != 0) */
+/* 	    res[r + b * *p] += X[i + r * *n] * weights[i + b * *n] * weights[j + b * *n] * (0 - mt[j] / Lambda[j]); */
+/* 	} */
+/*       } */
+/*     } */
+/*   } */
+/*   res; */
+/* }		  */
 
-void alphaEq2(double *X, double *Lambda,
-	      int *mt, int *n, int*p, 
-	      // output
-	      double *res) {
-  int i, j, r, iId = 0, jId = 0; 
+
+void alphaEq(double *X, double *Lambda, int *mt, int *n, int *p, double *res) {
+  int i, j, r; 
   for (i = 0; i < *n; i++) {
     for (j = 0; j < *n; j++) {
       for (r = 0; r < *p; r++) {
-	res[r] += X[i + r * *n] * (mt[i] * Lambda[j] - mt[j] * Lambda[i]);
+	if (Lambda[i] != 0 && Lambda[j] != 0) {
+	  res[r] += X[i + r * *n] * (mt[i] / Lambda[i] -  mt[j] / Lambda[j]);
+	}
+	if (Lambda[i] != 0 && Lambda[j] == 0) {
+	  res[r] += X[i + r * *n] * (mt[i] / Lambda[i]);
+	}
+	if (Lambda[i] == 0 && Lambda[j] != 0) {
+	  res[r] += X[i + r * *n] * (0 - mt[j] / Lambda[j]);
+	}
       }
     }
   }

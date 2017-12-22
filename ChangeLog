@@ -1,3 +1,11 @@
+2017-11-03 Sy Han Chiou <schiou@utdallas.edu>
+	* Major make over
+	* Cleaned the R codes
+	* New data structure: Time, id, event, status
+	* Added cox.LWYY and generalized scale model
+	* Added nonparametric methods
+	* Added event plot
+	* updated maintainer contact
 2015-10-30 Sy Han Chiou <schiou@hsph.harvard.edu>
 	* Version updated to published version. 
 	

@@ -1,16 +1,29 @@
-useDynLib(reReg)
-importFrom("graphics", "lines", "par", "plot", "title")
+useDynLib(reReg, .registration = TRUE)
+importFrom("graphics", "lines", "par", "plot", "title", "boxplot")
 importFrom("stats", "approx", "ksmooth", "lm", "model.extract",
            "model.matrix", "pnorm", "printCoefmat", "quantile",
            "rbinom", "rexp", "rgamma", "rgeom", "rlnorm", "rnorm",
-           "rpois", "runif", "rweibull", "var")
-importFrom("BB", BBsolve, dfsane)
+           "rpois", "runif", "rweibull", "var", "aggregate",
+           "as.formula", "coef", "sd")
+importFrom("methods", "getClass")
+importFrom("utils", "head")
+importFrom("BB", BBsolve, dfsane, BBoptim)
 importFrom("SQUAREM", squarem)
+importFrom("nleqslv", nleqslv)
 importFrom("MASS", ginv)
-importFrom("survival", Surv)
+importFrom("survival", Surv, basehaz, coxph, survfit)
+importFrom("ggplot2", ggplot, geom_point, aes, geom_line, ggtitle, scale_color_manual, scale_shape_manual, theme, element_text, labs, facet_grid, theme_bw)
 importFrom("aftgee", aftsrr)
-export(reSurv, is.reSurv, reReg, plot.reReg)
+importFrom("plyr", ddply, count)
+importFrom("stats", "terms")
+importFrom("stats", "pchisq")
+export(reSurv, is.reSurv, reReg, plotRate, plotHaz, plotEvents)
+S3method(coef, reReg)
 S3method(plot, reReg)
+S3method(plot, reSurv)
 S3method(print, reReg)
 S3method(summary, reReg)
 S3method(print, summary.reReg)
+
+## For debug
+## export(alphaEq, baseHaz, npMLE, betaEq, ghoshU2, sarm, HWeq, HWeq2, coefEq, M1eq)

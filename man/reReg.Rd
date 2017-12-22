@@ -5,15 +5,16 @@
 \description{
   Fits a joint model for the recurrent event process and the failure
   time that allows the censoring time to be informative about the
-  recurrent event process.
-  
-  Estimating procedures include a joint scale-change model,
-  Huang-Wang's method (Huang and Wang, 2004), and
-  Ghosh-Lin's method (Ghosh and Lin, 2003). The variance is estiamted
-  with an efficient bootstrap approach.
+  recurrent event process. The rate function of the underlying process
+  for the recurrent event process be specified as a Cox-type model, an
+  accelerated mean model, an accelerated failure time model, or a
+  generalized scale-change model.
 }
 \usage{
-reReg(formula, data, subset, method = "jsc", B = 200, contrasts = NULL)
+reReg(formula, data, B = 200, 
+      method=c("cox.LWYY", "cox.HW", "am.GL", "am.XCHWY", "sc.XCYH"),
+      se=c("NULL", "bootstrap", "resampling"), plot.ci = FALSE,
+      contrasts = NULL, control=list())
 }
 \arguments{
   \item{formula}{
@@ -26,95 +27,166 @@ reReg(formula, data, subset, method = "jsc", B = 200, contrasts = NULL)
     an optional data frame in which to interpret the variables
     occurring in the `formula'.
   }
-  \item{subset}{ an optional vector specifying a subset of observations
-    to be used in the fitting process.
-  }
-  \item{method}{
-    a character string specifying the underlying model and methods to
-    estimate the regression parameter. The following are permitted: `jsc':
-    joint scale-change model. `HW': Huang-Wang's
-    method. `GL': Ghosh-Lin method. Among these, `jsc' is recommended.
-    }
   \item{B}{
     a numeric value specifies the resampling number for variance
     estimation. 
     When B = 0, only the point estimates will be displayed.
   }
+  \item{method}{
+    a character string specifying the underlying model. See \sQuote{Details}.
+  }
+  \item{se}{
+    a character string specifying the standard error estimation method. See \sQuote{Details}.
+  }
+  \item{plot.ci}{
+    a logical value indicating whether the 95\% confidence interval for
+    the cumulative rate function and the cumulative hazard function
+    should be computed. Default is "TRUE".
+  }
   \item{contrasts}{ an optional list.
   }
+  \item{control}{ A list of control parameters.}
 }
-%% \details{
-%%   The underlying models are different for different methods. 
-%%   When \code{method = "jsc"}, the rate function of the counting process
-%%   takes the form
-%%   }
+\details{
+  The underlying models and assumptions are different for different methods.
+
+  \code{method = "cox.LWYY"} models the rate function  for the recurrent
+  event through a Cox-type model. This function returns results
+  equivalent to that of \code{coxph}. See reference Lin et al. (2000).
+
+  \code{method == "cox.HW"} jointly model the recurrent events and
+  failure time. This method assumes a Cox-type model for both the intensity
+  function of the recurrent event process and the hazard function of the
+  failure time. Informative censoring is accounted for via a shared
+  frailty variable. See reference Wang, Qin and Chiang(2001) and Huang
+  and Wang (2004). 
+
+  \code{method == "am.GL"} jointly model the recurrent events and
+  failure time. This method assumes an accelerated mean model for both
+  the recurrent event process and the failure time. This method uses
+  artificial censoring to allow for an unspecified association between
+  the two types of outcomes. Informative censoring is not allowed. See
+  reference Ghosh and Lin (2003).
+
+  \code{method == "am.XCHWY"} jointly model the recurrent events and
+  failure time. This method assumes an accelerated mean model for both
+  the recurrent event process and the failure time. Informative
+  censoring is accounted for via a shared frailty variable. See
+  reference Xu et al. (2017).  
+  
+  \code{method == "sc.XCYH"} models the rate function for the recurrent
+  events via a generalized scale-change model that includes Cox-type
+  models, accelerated mean models, and accelerated rate models as
+  special cases. The methods also provide a hypothesis test of these
+  submodels. Informative censoring is accounted for via a shared
+  frailty variable.
+
+  For standard errors estimation method:
+
+  \code{"NULL"} means do not calculate standard errors.
+  \code{"resampling"} is the efficient resampling-based sandwich
+  estimator that works with \code{method == "am.XCHWY"} and \code{method
+  == "sc.XCYH"}.
+  \code{"bootstrap"} works with all fitting methods.
+}
 \value{
   An object of S3 class \code{"reReg"} representing the fit, with the
   following components:
-  \item{alpha}{a vector of point estimates associated with rate function, \code{alpha}}
-  \item{beta}{ a vector of point estimates associated with hazard function, \code{beta}}
-  \item{va}{ estimated covariance matrix for \code{alpha}}
-  \item{vb}{ estimated covariance matrix for \code{beta}}
-  \item{lambda}{ a vector giving the estimated baseline cumulative rate
+  \item{alpha}{a vector of point estimates associated with rate
+  function, \code{alpha}} 
+  \item{beta}{ a vector of point estimates associated with hazard
+  function, \code{beta}} 
+  \item{t0}{a vector of all recurrent event times and terminal event
+  times} 
+  \item{lam}{ a vector giving the estimated baseline cumulative rate 
     function evaluated at the observation time of recurrence}
-  \item{haz}{ a vector giving the estimated baseline cumulative hazard
+  \item{haz}{ a vector giving the estimated baseline cumulative hazard 
     function evaluated at the observation time of recurrence}
-  \item{zHat}{ a vector giving the estimated frailty random variable at the observation time of recurrence}
+  \item{muZ}{ a numerical value giving the estimated mean frailty random 
+  variable when \code{cox.HW}, \code{am.XCHWY}, and \code{sc.XCYH}}
 }
 \references{
-  Ghosh, D. and D.Y. Lin (2003). Semiparametric Analysis of Recurrent
+  Xu, G., Chiou, S.H., Huang, C.-Y., Wang, M.-C. and Yan,
+  J. (2017). Joint Scale-change Models for Recurrent Events and Failure
+  Time. \emph{Journal of the American Statistical Association}
+  Forthcoming.
+  
+  Lin, D., Wei, L., Yang, I. and Ying, Z. (2000). Semiparametric
+  Regression for the Mean and Rate Functions of Recurrent
+  Events. \emph{Journal of the Royal Statistical Society: Series B
+  (Methodological)}, \bold{62}: 711 -- 730.
+
+  Wang, M.C., Qin, J., and Chiang, C.T. (2001). Analyzing Recurrent
+  Event Data with Informative Censoring. \emph{Journal of the American
+  Statistical Association} \bold{96}{455}: 1057--1065.
+  
+  Ghosh, D. and Lin, D.Y. (2003). Semiparametric Analysis of Recurrent
   Events Data in the Presence of Dependent Censoring. \emph{Biometrics},
   \bold{59}: 877 -- 885.
 
   Huang, C.Y. and Wang, M.C. (2004). Joint Modeling and Estimation
   for Recurrent Event Processes and Failure Time Data. \emph{Journal
     of the American Statistical Association} \bold{99}(468): 1153--1165.
-
-  %% Xu, G., Chiou, S.H., Huang, C.-Y., Wang, M.-C. and Yan, J. Joint
-  %% Scale-change Models for Recurrent Events and Failure Time. 
 }
-
 \seealso{
   \code{\link{reSurv}}, \code{\link{plot.reReg}}
 }
 \examples{
 ## readmission data
 data(readmission)
-(fit <- reReg(reSurv(t.start, id, death, t.stop) ~ sex + dukes + chemo,
-  data = readmission, B = 0))
-summary(fit)
-(fit.HW <- reReg(reSurv(t.start, id, death, t.stop) ~ sex + dukes + chemo,
-  data = readmission, method = "HW", B = 0))
-summary(fit.HW)
-
-## simulation data
-simDat <- function(n, a, b, tau) {
-  z <- rgamma(n, 2, 0.2)
-  X1 <- rbinom(n, 1, 0.5)
-  X2 <- runif(n, 0 ,1)
-  lambda <- z * (1/10) * exp(cbind(X1, X2) \%*\% a)
-  mt <- rpois(n, tau * lambda)
-  eventT <- lapply(sapply(mt, function(x) runif(x) * tau), sort)
-  D <- exp(- cbind(X1, X2) \%*\% b) * sqrt(800 * (-log(runif(n)) / z))
-  C <- (X1 == 1) * rexp(n, 0.1) + (X1 == 0) * rexp(n, ifelse(z == 0, 10^-10, z)^2/300)
-  Y <- pmin(C, tau, D)
-  Delta <- 1 * (D <= Y)
-  for (i in 1:n) {
-    eventT[[i]] <- c(eventT[[i]][eventT[[i]] < Y[i]], Y[i])
-  }
-  out <- data.frame(id = rep(1:n, unlist(lapply(eventT, length))),
-                    T = unlist(eventT),
-                    X1 = rep(X1, unlist(lapply(eventT, length))),
-                    X2 = rep(X2, unlist(lapply(eventT, length))),
-                    Delta = rep(Delta, unlist(lapply(eventT, length)))
-                    )
-  out           
-}
 set.seed(123)
-mydat <- simDat(50, a = c(-1, 1), b = c(-1, 1), tau = 10)
-(fit.sim <- reReg(reSurv(T, id, Delta) ~ X1 + X2, data = mydat, B = 0))
-summary(fit.sim)
+## Acceralted Mean Model
+(fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
+              data = subset(readmission, id < 50),
+              method = "am.XCHWY", se = "resampling", B = 20))
+summary(fit)
+
+## Generalized Scale-Change Model
+set.seed(123)
+(fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
+              data = subset(readmission, id < 50),
+              method = "sc.XCYH", se = "resampling", B = 20))
+summary(fit)
+\dontrun{
+## simulation data
+simDat <- function(n, a, b, latent = FALSE) {
+    ## setting rate function
+    Lam.f <- function(t, z, x, w) .5 * z * exp(-x + w) * log(1 + t * exp(x))
+    Lam.f0 <- function(t) .5 * log(1 + t)
+    invLam.f  <- function(t, z, x, w) (exp((2 / z) * exp(x - w) * t )- 1) / exp(x)
+    ## setting hazard funciton
+    ## Haz.f0 <- function(t) .5 * log(1 + t) # assume constant hazard for now
+    dat <- NULL
+    for (id in 1:n) {
+        z <- ifelse(latent, rgamma(1, 4, 4), 1)
+        x1 <- rnorm(1)
+        x2 <- rnorm(1)
+        x <- c(x1, x2)
+        cen <- rexp(1, z * exp(x \%*\% b) / 60) ## this gives constant hazard of 1/60
+        y <- min(cen, 60)
+        D <- 1 * (cen == y)
+        tmpt <- NULL
+        while(sum(tmpt) < Lam.f(y, z, c(x \%*\% a), c(x \%*\% b))) {
+            tmpt <- c(tmpt, rexp(1))
+        }
+        m <- length(tmpt) - 1
+        if (m > 0) {
+            tt <- invLam.f(cumsum(tmpt[1:m]), z, c(x \%*\% a), c(x \%*\% b))
+            dat <- rbind(dat, cbind(ID = id, Time = c(tt[order(tt)], y),
+                                    event = c(rep(1, m), 0), status = c(rep(0, m), D),
+                                    Z = z, M = m, X1 = x1, X2 = x2))
+        } else {
+            dat <- rbind(dat, cbind(ID = id, Time = y, event = 0, status = D,
+                                    Z = z, M = m, X1 = x1, X2 = x2))
+        }
+    }
+    return(data.frame(dat))
 }
+set.seed(2017)
+dat <- simDat(200, c(0, 0), c(0, 0), TRUE) ## generate data under informative censoring
+fm <- reSurv(Time, ID, event, status) ~ X1 + X2
+fit.HW <- reReg(fm, data = dat, method = "cox.HW", plot.ci = TRUE, B = 5)
+}}
 \keyword{reReg}
 
 

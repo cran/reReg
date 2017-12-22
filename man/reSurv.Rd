@@ -7,7 +7,7 @@
   variable in reReg model formula.
 }
 \usage{
-  reSurv(time1, id, event, time2 = NULL)
+  reSurv(time1, id, event, status, time2 = NULL)
   is.reSurv(x) 
 }
 \arguments{
@@ -16,11 +16,11 @@
     starting time for the gap time between two successive recurrent
     events. In the absence of 'time2', this is the observation time of
     recurrence on calendar time scale, in which, the time corresponds to
-    the time since entry/inclusion in the study. Furthermore, the last
-    observation time is censored for each subject.}
+    the time since entry/inclusion in the study.}
   \item{time2}{An optional vector for ending time for the gap time
     between two successive recurrent events.}
-  \item{event}{ A binary vector used as the status indicator for the terminal event.}
+  \item{event}{ A binary vector used as the recurrent event indicator.}
+  \item{status}{A binary vector used as the status indicator for the terminal event.}
   \item{x}{An \code{reSurv} object.}
 }
 %% \details{
@@ -34,8 +34,8 @@
 \examples{
 data(readmission)
 head(readmission)
-(with(readmission[1:10,], reSurv(t.start, id, death, t.stop)))
-(with(readmission[1:10,], reSurv(t.stop, id, death)))
+(with(readmission[1:10,], reSurv(t.stop, id, event, death)))
+plot(with(readmission[1:10,], reSurv(t.stop, id, event, death)))
 }
 \keyword{reReg}
 \keyword{plot.reReg}

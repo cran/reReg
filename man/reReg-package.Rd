@@ -17,8 +17,8 @@
   \tabular{ll}{
     Package: reReg
     Type: Package
-    Version: 1.0-0
-    Date: 2015-10-30
+    Version: 1.1-0
+    Date: 2017-10-30
     License: GPL(>=3)
     LazyLoad: yes
   }
@@ -27,6 +27,16 @@
   Sy Han Chiou \email{schiou@hsph.harvard.edu}
 }
 \references{
+  Xu, G., Chiou, S.H., Huang, C.-Y., Wang, M.-C. and Yan,
+  J. (2017). Joint Scale-change Models for Recurrent Events and Failure
+  Time. \emph{Journal of the American Statistical Association}
+  Forthcoming.
+
+  Lin, D., Wei, L., Yang, I. and Ying, Z. (2000). Semiparametric
+  Regression for the Mean and Rate Functions of Recurrent
+  Events. \emph{Journal of the Royal Statistical Society: Series B
+    (Methodological)}, \bold{62}: 711 -- 730.
+  
   Wang, M.C., Qin, J., and Chiang, C.T. (2001). Analyzing Recurrent
   Event Data with Informative Censoring. \emph{Journal of the American
     Statistical Association} \bold{96}{455}: 1057--1065.
