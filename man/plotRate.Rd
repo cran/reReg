@@ -20,7 +20,7 @@ data(readmission)
 set.seed(123)
 fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
                    data = subset(readmission, id < 50),
-                   method = "am.XCHWY", se = "resampling", B = 20, plot.ci = TRUE)
+                   method = "am.XCHWY", se = "resampling", B = 20)
 ## Plot both the baseline cumulative rate and hazard function
 plot(fit)
 ## Plot baseline cumulative rate function

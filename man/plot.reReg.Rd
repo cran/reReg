@@ -19,7 +19,7 @@
 data(readmission)
 fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
              data = subset(readmission, id < 50),
-             method = "am.XCHWY", se = "resampling", B = 20, plot.ci = TRUE)
+             method = "am.XCHWY", se = "resampling", B = 20)
 plot(fit)
 }
 \keyword{reReg}

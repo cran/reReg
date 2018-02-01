@@ -41,7 +41,7 @@ reReg(formula, data, B = 200,
   \item{plot.ci}{
     a logical value indicating whether the 95\% confidence interval for
     the cumulative rate function and the cumulative hazard function
-    should be computed. Default is "TRUE".
+    should be computed. Default is "FALSE".
   }
   \item{contrasts}{ an optional list.
   }
@@ -185,7 +185,7 @@ simDat <- function(n, a, b, latent = FALSE) {
 set.seed(2017)
 dat <- simDat(200, c(0, 0), c(0, 0), TRUE) ## generate data under informative censoring
 fm <- reSurv(Time, ID, event, status) ~ X1 + X2
-fit.HW <- reReg(fm, data = dat, method = "cox.HW", plot.ci = TRUE, B = 5)
+fit.HW <- reReg(fm, data = dat, method = "cox.HW", B = 5)
 }}
 \keyword{reReg}
 
