@@ -59,7 +59,7 @@ summary.reReg <- function(object, ...) {
                                       cum.haz.U = object$hazU), tabA = NA)
         ## assuming tabA is na if fit with ~1
     }
-    if (object$method == "sc.XCYH") {
+    if (object$method == "sc.XCYH" & object$se == "resampling") {
         p <- length(object$alpha)
         out$HA.chi <- object$alpha %*% solve(object$varMat[1:p, 1:p]) %*% object$alpha
         out$HB.chi <- object$beta %*%
@@ -67,9 +67,9 @@ summary.reReg <- function(object, ...) {
                   2 * object$varMat[1:p, (p+2):(2*p+1)]) %*% object$beta
         out$HG.chi <- object$gamma[-1] %*%
             solve(object$varMat[(p+2):(2*p+1), (p+2):(2*p+1)]) %*% object$gamma[-1]
-        out$HA.pval <- 1 - pchisq(out$HA.chi, 2)
-        out$HB.pval <- 1 - pchisq(out$HB.chi, 2)
-        out$HG.pval <- 1 - pchisq(out$HG.chi, 2)
+        out$HA.pval <- 1 - pchisq(out$HA.chi, length(object$alpha))
+        out$HB.pval <- 1 - pchisq(out$HB.chi, length(object$beta))
+        out$HG.pval <- 1 - pchisq(out$HG.chi, length(object$beta))
     }
     class(out) <- "summary.reReg"
     out
@@ -100,16 +100,18 @@ print.summary.reReg <- function(x, ...) {
             printCoefmat(as.data.frame(x$tabA), P.values = TRUE, has.Pvalue = TRUE)
             cat("\nMultiplicative coefficients:\n")
             printCoefmat(as.data.frame(x$tabB), P.values = TRUE, has.Pvalue = TRUE)
-            cat("\nHypothesis tests:\n")
-            cat("\nH0 Cox-type model:")
-            cat(paste("\n     X-squared = ", round(x$HA.chi, 4), ", df = ", p,
-                      ", p-value = ", round(x$HA.pval, 4), sep = ""))
-            cat("\nH0 Accelerated rate model:")
-            cat(paste("\n     X-squared = ", round(x$HB.chi, 4), ", df = ", p,
-                      ", p-value = ", round(x$HB.pval, 4), sep = ""))
-            cat("\nH0 Accelerated mean model:")
-            cat(paste("\n     X-squared = ", round(x$HG.chi, 4), ", df = ", p,
-                      ", p-value = ", round(x$HG.pval, 4), sep = ""))
+            if (!is.null(x$HA.chi)) {
+                cat("\nHypothesis tests:\n")
+                cat("\nH0 Cox-type model:")
+                cat(paste("\n     X-squared = ", round(x$HA.chi, 4), ", df = ", p,
+                          ", p-value = ", round(x$HA.pval, 4), sep = ""))
+                cat("\nH0 Accelerated rate model:")
+                cat(paste("\n     X-squared = ", round(x$HB.chi, 4), ", df = ", p,
+                          ", p-value = ", round(x$HB.pval, 4), sep = ""))
+                cat("\nH0 Accelerated mean model:")
+                cat(paste("\n     X-squared = ", round(x$HG.chi, 4), ", df = ", p,
+                          ", p-value = ", round(x$HG.pval, 4), sep = ""))
+            }
         }
         if (x$method == "cox.LWYY") {
             cat("\nMethod: Lin-Wei-Yang-Ying method \n")

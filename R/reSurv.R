@@ -1,6 +1,6 @@
 reSurv <- function(time1, id, event, status, time2 = NULL) {
-    if (sum(time1 <= 0) > 0 & is.null(time2))
-        stop("Observation time must be positive.")
+    ## if (sum(time1 <= 0) > 0 & is.null(time2))
+    ##     stop("Observation time must be positive.")
     if (!is.null(time2) & any(time1 > time2)) 
         stop("Stop time must be > start time")
     if (!is.numeric(time1))

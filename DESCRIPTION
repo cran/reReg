@@ -1,8 +1,8 @@
 Package: reReg
 Type: Package
 Title: Recurrent Event Regression
-Version: 1.1-1
-Date: 2018-01-30
+Version: 1.1-2
+Date: 2018-04-17
 Author: Sy Han (Steven) Chiou
 Maintainer: Sy Han (Steven) Chiou <schiou@utdallas.edu>
 Description: A collection of regression models for recurrent event process and failure time.
@@ -15,7 +15,7 @@ License: GPL (>= 3)
 LazyLoad: yes
 Imports: BB, MASS, SQUAREM, aftgee, survival, methods, nleqslv,
         ggplot2, plyr
-Packaged: 2018-01-31 06:07:57 UTC; schiou
+Packaged: 2018-04-17 21:31:26 UTC; schiou
 NeedsCompilation: yes
 Repository: CRAN
-Date/Publication: 2018-02-01 06:56:12 UTC
+Date/Publication: 2018-04-17 21:47:08 UTC

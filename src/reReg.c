@@ -27,37 +27,7 @@ void plLambda(double *sl, double *tij, double *yi, double *weights,
 	res[j] = res[j - 1] + (dl / Rl);
     }
   }
-  res;
 }
-
-
-/* void plLambda(double *sl, double *tij, double *yi, double *weights, */
-/* 	      int *n, int *N, // n is the length of sl */
-/* 	      // output */
-/* 	      double *res) { */
-/*   int i, j; */
-/*   double dl = 0, Rl = 0; */
-/*   for (j = 0; j < *n; j++) { */
-/*     res[j] = 1; */
-/*     dl = 0; */
-/*     Rl = 0; */
-/*     for (i = 0; i < *N; i++) { */
-/*       if (sl[j] >= tij[i] && sl[j] <= yi[i]) { */
-/* 	Rl = Rl + weights[i]; */
-/*       } */
-/*       if (sl[j] == tij[i] && tij[i] != yi[i]) { */
-/* 	dl = dl + weights[i]; */
-/*       } */
-/*     } */
-/*     if (Rl > 0) { */
-/*       if (j == 0) */
-/* 	res[j] = (1 - dl / Rl); */
-/*       if (j > 0) */
-/* 	res[j] = res[j - 1] * (1 - dl / Rl); */
-/*     } */
-/*   } */
-/*   res; */
-/* } */
 
 void sarm1(double *X, double *Lambda, double *weights, double *gamma, 
 	   int *mt, int *n, int *p, int *B, 
@@ -78,7 +48,6 @@ void sarm1(double *X, double *Lambda, double *weights, double *gamma,
       } // end r
     } // end i
   } // end b
-  res;
 }
 
 // SARM 3
@@ -129,7 +98,7 @@ void sarm2(double *X, double *T, double *Y, double *weights,
       }
       de = 0.0;
       for (j = 0; j < *n; j++) {
-	if (T[i] <= Y[j] & T[i] >= T[j]) {
+	if (T[i] <= Y[j] && T[i] >= T[j]) {
 	  for (r = 0; r < *p; r++) {
 	    nu[r] += X[j + r * *n];
 	  }
@@ -143,7 +112,6 @@ void sarm2(double *X, double *T, double *Y, double *weights,
     }
     }
   Free(nu);
-  res;
 }
 
 /* void alphaEq1(double *X, double *Lambda, double *weights,  */
@@ -185,7 +153,6 @@ void alphaEq(double *X, double *Lambda, int *mt, int *n, int *p, double *res) {
       }
     }
   }
-  res;
 }		 
 
 void betaEst(double *Y, double *X, double *delta, double *z, double *weights,
@@ -222,7 +189,6 @@ void betaEst(double *Y, double *X, double *delta, double *z, double *weights,
     }
   }
   Free(nu);
-  res;
 }
 
 void HWb(double *Y, double *X, double *delta, double *z, double *weights,
@@ -259,5 +225,48 @@ void HWb(double *Y, double *X, double *delta, double *z, double *weights,
     }
   }
   Free(nu);
-  res;
+}
+
+
+void scaleChangeLog(int*n, int *p, int *start, int *M, double *y, double *tij, double *X, double *W, double *result) {
+  int i, j, k, l, r;
+  double de;
+  double *nu = Calloc(*p, double);
+  for (i = 0; i < n[0]; i++) {
+    for (j = 0; j < M[i]; j++) {
+      for (k = 0; k < n[0]; k++) {
+	for (l = 0; l < M[k]; l++) {
+	  if (tij[start[k] + l] <= tij[start[i] + j] && tij[start[i] + j] <= y[start[k]]) {
+	    de = de + W[k];
+	    for (r = 0; r < p[0]; r++) {
+	      nu[r] += W[k] * X[k + r * n[0]]; 
+	    }
+	  } // end if
+	}
+      }
+      for (r = 0; r < p[0]; r++) {
+	if (de > 0) result[r] += W[i] * (X[i + r * n[0]] - nu[r] / de);
+	nu[r] = 0;
+      }
+      de = 0;
+    }
+  }
+  Free(nu);
+}
+
+void scaleChangeGehan(int*n, int *p, int *start, int *M, double *y, double *tij, double *X, double *W, double *result) {
+  int i, j, k, l, r;
+  for (i = 0; i < n[0]; i++) {
+    for (j = 0; j < M[i]; j++) {
+      for (k = 0; k < n[0]; k++) {
+	for (l = 0; l < M[k]; l++) {
+	  if (tij[start[k] + l] <= tij[start[i] + j] && tij[start[i] + j] <= y[start[k]]) {
+	    for (r = 0; r < p[0]; r++) {
+	      result[r] += W[i] * W[k] * (X[i + r * n[0]] - X[k + r * n[0]]);
+	    }	    
+	  } // end if
+	}
+      }
+    }
+  }
 }

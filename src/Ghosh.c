@@ -34,9 +34,7 @@ void ghosh(double *Tik, double *Y, double *X, int *cl, int *clsz, int *n, int *p
     }
   }
   Free(nu);
-  res;
 }
-
 
 void lwyy(double *Tik, double *Y, double *X, double *wgt, int *cl, int *clsz, int *n, int *p, double *res) {
   int i, j, k, r;
@@ -70,7 +68,6 @@ void lwyy(double *Tik, double *Y, double *X, double *wgt, int *cl, int *clsz, in
     }
   }
   Free(nu);
-  res;
 }
 
 
