@@ -1,3 +1,7 @@
+print.reSurv <- function(x, ...) {
+   print(x$reTb)
+}
+
 print.reReg <- function(x, ...) {
     if (!is.reReg(x))
         stop("Must be a reReg x")

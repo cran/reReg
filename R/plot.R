@@ -1,159 +1,101 @@
+globalVariables(c("Time", "Yi", "id", "recType", "status", "tij"))
+
 ## Default Event plot
-plot.reSurv <- function(x, control = list(), ...) {
-    recType <- event <- status <- id <- Time <- NULL
-    ctrl <- plotEvents.control()
-    namc <- names(control)
-    if (!all(namc %in% names(ctrl))) 
-        stop("unknown names in control: ", namc[!(namc %in% names(ctrl))])
-    ctrl[namc] <- control
-    ## event <- x$reDF$event
-    ## status <- x$reDF$status
-    ## id <- x$reDF$id
-    ## Time <- x$reDF$Time
-    if (!is.reSurv(x)) stop("Response must be a reSurv class")
-    n <- length(unique(x$reDF$id))
-    ldat0 <- data.frame(id = rep(unique(x$reDF$id), 2),
-                        Time = c(rep(0, n), aggregate(Time ~ id, max, data = x$reDF)$Time),
-                        status = c(rep(0, n), aggregate(status ~ id, max, data = x$reDF)$status))
-    ldat0 <- ldat0[order(ldat0$id),]
-    rownames(ldat0) <- NULL
-    ldat <- x$reDF
-    ## table(ldat$event:ldat$status)
-    ## if (control$plotCen) {
-    ##     ldat$event <- as.factor(ldat$event)
-    ##     ldat$status <- as.factor(ldat$status)
-    ##     p <- ggplot(ldat0, aes(x = Time, y = id, group = id)) +
-    ##         geom_line(color = "gray55", size = 1.05) +
-    ##         geom_point(data = ldat, aes(x = Time, y = id, color = event:status, shape = event:status),
-    ##                    size = 1.5, alpha = .7) +
-    ##         scale_color_manual(values = c("red", "red", "blue"), name = "Event types:",
-    ##                            breaks=c("0:0", "0:1", "1:0"),
-    ##                            labels = c("Censored\n terminal events",
-    ##                                       "Uncensored\n terminal event", "Recurrent event")) +
-    ##         scale_shape_manual(values=c(2, 17, 16), name = "Event types:",
-    ##                        breaks=c("0:0", "0:1", "1:0"),
-    ##                        labels = c("Censored\n terminal events",
-    ##                                   "Uncensored\n terminal event", "Recurrent event")) +
-    ##         ggtitle(control$title) +
-    ##         theme(plot.title = element_text(hjust = 0.5), legend.position = "bottom") +
-    ##         labs(x = control$xlab, y = control$ylab)
-    ## }
-    ## if (!control$plotCen) {
-    if (sum(ldat$event + ldat$status == 0) > 0)
-        ldat <- ldat[-which(ldat$event + ldat$status == 0),]
-    ldat$event <- as.factor(ldat$event)
-    ldat$status <- as.factor(ldat$status)
-    ldat$recType <- as.factor(ldat$recType)
-    if (identical(ldat$event, ldat$recType)) {
-        p <- ggplot(ldat0, aes(x = Time, y = id, group = id)) +
-            geom_line(color = "gray55", size = 1.05) +
-            geom_point(data = ldat, aes(x = Time, y = id, shape = event:status),
-                       size = 1.5, alpha = .7) +
-            scale_shape_manual(values=c(16, 4), name = "Event types:",
-                               breaks=c("0:1", "1:0"),
-                               labels = c(ctrl$terminal.name, ctrl$recurrent.name)) +
-            ggtitle(ctrl$title) +
-            labs(x = ctrl$xlab, y = ctrl$ylab) + theme_bw()
-    } else {
-        tmp <- table(with(ldat, recType:status))
-        k <- length(unique(ldat$recType)) - 1
-        if (is.null(ctrl$recurrent.types))
-            ctrl$recurrent.types <- sapply(1:k, function(x) paste("Recurrent Type", x, collapse=""))
-        if (length(ctrl$recurrent.types) != k)
-            stop("User specified recurrent name must be the same length as the number of recurrent events")
-        p <- ggplot(ldat0, aes(x = Time, y = id, group = id)) +
-            geom_line(color = "gray55", size = 1.05) +
-            geom_point(data = ldat, aes(x = Time, y = id, shape = recType:status),
-                       size = 1.5, alpha = .7) +
-            scale_shape_manual(values = c(16, 1:k), name = "Event types:",
-                               ## breaks = names(tmp[tmp > 0]),
-                               labels = c(ctrl$terminal.name, ctrl$recurrent.types)) +
-            ggtitle(ctrl$title) +
-            labs(x = ctrl$xlab, y = ctrl$ylab) + theme_bw()
-    }
-    p
+plot.reSurv <- function(x, data, order = TRUE, return.grob = FALSE, control = list(), ...) {
+    plotEvents(x, data, order = order, return.grob = return.grob, control = control)
 }
 
-##################################################################################
-## More flexibleEvent plots
-##################################################################################
-
-plotEvents <- function(formula, data, control = list(), ...) {
-    recType <- event <- status <- id <- Time <- NULL
+plotEvents <- function(formula, data, order = TRUE, return.grob = FALSE, control = list(), ...) {
     ctrl <- plotEvents.control()
     namc <- names(control)
     if (!all(namc %in% names(ctrl))) 
         stop("unknown names in control: ", namc[!(namc %in% names(ctrl))])
     ctrl[namc] <- control
     call <- match.call()
-    if (class(formula) == "reSurv") return(plot(formula))
-    if (missing(data)) obj <- eval(formula[[2]], parent.frame()) 
-    if (!missing(data)) obj <- eval(formula[[2]], data) 
-    if (!is.reSurv(obj)) stop("Response must be a reSurv object")
-    if (formula[[3]] == 1) {
-        return(plot(obj))
+    nX <- 0
+    if (is.reSurv(formula)) {dat <- formula$reTb
     } else {
-        if (length(attr(terms(formula), "term.labels")) > 1)
-            stop("The plotEvents can only take one covaraite")
-        if (missing(data)) DF <- cbind(obj$reDF, eval(formula[[3]], parent.frame()))
-        if (!missing(data)) DF <- cbind(obj$reDF, eval(formula[[3]], data))
-        colnames(DF) <- c(names(obj$reDF), paste0(formula[3], collapse = ""))
+        ## if (length(attr(terms(formula), "term.labels")) > 1)
+        ##     stop("The current vision can only handle one covaraite.")
+        if (missing(data)) obj <- eval(formula[[2]], parent.frame())
+        else obj <- eval(formula[[2]], data)
+        dat <- obj$reTb
+        nX <- attr(terms(formula), "term.labels")
+        if (formula[[3]] != 1) {
+            if (missing(data)) DF <- cbind(obj$reDF, sapply(nX, function(x) eval(as.symbol(paste(x)), parent.frame())))
+            if (!missing(data)) DF <- cbind(obj$reDF, sapply(nX, function(x) eval(as.symbol(paste(x)), data)))
+            ## colnames(DF) <- c(names(obj$reDF), nX)
+            suppressMessages(dat <- left_join(obj$reTb, unique(select(DF, id, nX))))
+        }
     }
-    n <- length(unique(DF$id))
-    ldat0 <- data.frame(id = rep(unique(DF$id), 2),
-                        Time = c(rep(0, n), aggregate(Time ~ id, max, data = DF)$Time),
-                        status = c(rep(0, n), aggregate(status ~ id, max, data = DF)$status))
-    ldat0 <- ldat0[order(ldat0$id),]
-    rownames(ldat0) <- NULL
-    ldat0$tmp <- DF[match(ldat0$id, DF$id), 6]
-    ldat <- DF
-    if (grepl(":", names(ldat)[6])) names(ldat)[6] <- gsub(":", "", names(ldat)[6])
-    names(ldat0)[4] <- names(ldat)[6]
-    ldat[,6] <- as.factor(ldat[,6])
-    if (sum(ldat$event + ldat$status == 0) > 0)
-        ldat <- ldat[-which(ldat$event + ldat$status == 0),]
-    ldat$event <- as.factor(ldat$event)
-    ldat$status <- as.factor(ldat$status)
-    ldat$recType <- as.factor(ldat$recType)
-    if (identical(ldat$event, ldat$recType)) {
-        ## k <- length(unique(ldat$recType)) - 1
-        p <- ggplot(ldat0, aes(x = Time, y = id, group = id)) +
-            geom_line(color = "gray55", size = 1.05) +
-            facet_grid(eval(as.symbol(names(ldat)[6])) ~ ., scales = "free_y", space = "free_y") +
-            geom_point(data = ldat, aes(x = Time, y = id, shape = event:status),
-                       size = 1.5, alpha = .7) +
-            scale_shape_manual(values=c(16, 4), name = "Event types:",
-                               ## breaks=c("0:1", "1:0"),
-                               labels = c(ctrl$terminal.name, ctrl$recurrent.name)) +
-            ggtitle(ctrl$title) +
-            labs(x = ctrl$xlab, y = ctrl$ylab) + theme_bw()
-    } else {
-        ## tmp <- table(with(ldat, recType:status))
-        k <- length(unique(ldat$recType)) - 1
-        if (is.null(ctrl$recurrent.types))
-            ctrl$recurrent.types <- sapply(1:k, function(x) paste("Recurrent Type", x, collapse=""))
-        if (length(ctrl$recurrent.types) != k)
-            stop("User specified recurrent name must be the same length as the number of recurrent events")
-        p <- ggplot(ldat0, aes(x = Time, y = id, group = id)) +
-            geom_line(color = "gray55", size = 1.05) +
-            facet_grid(eval(as.symbol(names(ldat)[6])) ~ ., scales = "free_y", space = "free_y") +
-            geom_point(data = ldat, aes(x = Time, y = id, shape = recType:status),
-                       size = 1.5, alpha = .7) +
-            scale_shape_manual(values = c(16, 1:k), name = "Event types:",
-                               ## breaks = names(tmp[tmp > 0]),
-                               labels = c(ctrl$terminal.name, ctrl$recurrent.types)) +
-            ggtitle(ctrl$title) +
-            labs(x = ctrl$xlab, y = ctrl$ylab) + theme_bw()
+    if (order) {
+        if (nX == 0 || formula[[3]] == 1) dat <- dat %>% mutate(id = rank(Yi, ties.method = "first"))
+        else dat <- dat %>% group_by_at(6:ncol(dat)) %>% mutate(id = rank(Yi, ties.method = "first")) 
     }
-    p    
+    sz <- 1 + 8 / (1 + exp(length(unique(dat$id)) / 30))
+    k <- length(unique(unlist(dat$recType)))
+    shp.val <- c(17, rep(19, k))
+    clr.val <- c(alpha("red", ctrl$alpha), hcl(h = seq(120, 360, length.out = k), l = 60, alpha = ctrl$alpha))
+    rec.lab <- paste("r", 1:k, sep = "")
+    if (k == 1) {
+        shp.lab <- c(ctrl$terminal.name, ctrl$recurrent.name)
+    } 
+    if (k > 1 & is.null(ctrl$recurrent.type)) {
+        shp.lab <- c(ctrl$terminal.name, paste(ctrl$recurrent.name, 1:k))
+    }
+    if (k > 1 & !is.null(ctrl$recurrent.type)) {
+        if (length(ctrl$recurrent.type) == k) {
+            shp.lab <- c(ctrl$terminal.name, ctrl$recurrent.type)
+        } else {
+            cat('The length of "recurrent.type" mismatched, default names are used.\n')
+            shp.lab <- c(ctrl$terminal.name, paste(ctrl$recurrent.name, 1:k))            
+        }
+    }
+    names(shp.val) <- names(clr.val) <- c("Yi", rec.lab)
+    ## ggplot starts here
+    gg <- ggplot(dat, aes(id, Yi)) +
+        geom_bar(stat = "identity", fill = "gray75") +
+        geom_point(data = dat %>% filter(status > 0),
+                   aes(id, Yi, shape = "Yi", color = "Yi"), size = sz) +
+        geom_point(data = dat %>% filter(!map_lgl(tij, is.null)) %>%
+                       unnest(tij, recType), # %>% select(id, tij, recType),
+                   aes(id, tij, shape = factor(recType, labels = rec.lab), 
+                       color = factor(recType, labels = rec.lab)),
+                   size = sz) + 
+        ## position = position_jitter(w = 0.1, h = 0)) +
+        scale_shape_manual(
+            name = "", values = shp.val,
+            labels = shp.lab,
+            breaks = c("Yi", rec.lab)) +
+        scale_color_manual(
+            name = "", values = clr.val,
+            labels = shp.lab,
+            breaks = c("Yi", rec.lab)) +
+        coord_flip() + 
+        theme(axis.line.y = element_blank(),
+              axis.title.y = element_text(vjust = 0),
+              axis.text.y = element_blank(),
+              axis.ticks.y = element_blank())
+    if (nX > 0 && formula[[3]] != 1) 
+        gg <- gg + facet_grid(as.formula(paste(formula[3], "~.", collapse = "")),
+                              scales = "free", space = "free", switch = "both")
+    if (!return.grob) {
+        gg + theme(panel.background = element_blank(),
+                   axis.line = element_line(colour = "black"),
+                   legend.key = element_rect(fill = "white", color = "white")) +
+            scale_x_continuous(expand = c(0, 1)) +
+            ggtitle(ctrl$title) + labs(x = ctrl$ylab, y = ctrl$xlab) +
+            guides(shape = guide_legend(override.aes = list(size = 2.7)))
+    } else {return(ggplotGrob(gg))}
 }
 
 plotEvents.control <- function(xlab = "Time", ylab = "Subject", title = "Recurrent event plot",
                                terminal.name = "Terminal event",
                                recurrent.name = "Recurrent event",
-                               recurrent.types = NULL) {
+                               recurrent.type = NULL, alpha = .7) {
     list(xlab = xlab, ylab = ylab, title = title, terminal.name = terminal.name,
-         recurrent.name = recurrent.name, recurrent.types = recurrent.types)
+         recurrent.name = recurrent.name, recurrent.type = recurrent.type,
+         alpha = alpha)
 }
 
 ##################################################################################

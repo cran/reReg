@@ -17,7 +17,7 @@
 \examples{
 ## readmission data
 data(readmission)
-fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
+fit <- reReg(reSurv(t.stop, event, death, id) ~ sex + chemo,
              data = subset(readmission, id < 50),
              method = "am.XCHWY", se = "resampling", B = 20)
 plot(fit)

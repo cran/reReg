@@ -2,15 +2,23 @@
 \alias{plot.reSurv}
 \title{Plot a reSurv Object.}
 \description{
-  Displays event plot for an reSurv object.
+  Displays an event plot for an reSurv object.
 }
 \usage{
-\method{plot}{reSurv}(x, control = list(), ...)
+\method{plot}{reSurv}(x, data, order = TRUE, return.grob = FALSE, control = list(), ...)
 }
 \arguments{
-  \item{x}{ an object of class \code{reSurv}, usually returned by
+  \item{x}{an object of class \code{reSurv}, usually returned by
     the \code{reSurv} function.}
-  \item{control}{ A list of control parameters.}
+  \item{data}{
+    an optional data frame in which to interpret the variables
+    occurring in the `formula'.
+  }
+  \item{order}{an optional logical value. If "TRUE", the event plot
+    is sorted by the terminal times.}
+  \item{return.grob}{an optional logical value. If "TRUE", a ggplot2 plot grob
+    will be returned.}
+  \item{control}{ a list of control parameters.}
   \item{...}{for future methods}
 }
 \details{
@@ -23,19 +31,16 @@
 \seealso{\code{\link{reSurv}}}
 \examples{
 data(readmission)
-reObj <- with(readmission, reSurv(t.stop, id, event, death))
+reObj <- with(subset(readmission, id <= 10), reSurv(t.stop, event, death, id))
 ## Default labels
 plot(reObj)
+plot(reObj, order = FALSE)
 ## User specified labels
 plot(reObj, control = list(xlab = "User xlab", ylab = "User ylab", title = "User title"))
 
-## Multiple recurrent event types
-readmission$event2 <- ifelse(readmission$event == 0, 0, sample(1:3,
-nrow(readmission), TRUE))
-reObj2 <- with(readmission, reSurv(t.stop, id, event2, death))
+## With multiple hypothetical event types
+set.seed(1)
+reObj2 <- with(readmission, reSurv(t.stop, event * sample(1:3, 861, TRUE), death, id))
 plot(reObj2)
-## Also allows for user specified names
-plot(reObj2, control = list(xlab = "User xlab", ylab = "User ylab", title = "User title",
-             recurrent.types = c("Recurrent type A", "Recurrent type B", "Recurrent type C")))
 }
 \keyword{plot.reSurv}

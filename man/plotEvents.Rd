@@ -2,15 +2,10 @@
 \alias{plotEvents}
 \title{Produce event plot}
 \description{
-  Fits a joint model for the recurrent event process and the failure
-  time that allows the censoring time to be informative about the
-  recurrent event process. The rate function of the underlying process
-  for the recurrent event process be specified as a Cox-type model, an
-  accelerated mean model, an accelerated failure time model, or a
-  generalized scale-change model.
+  Displays an event plot with more flexible options.
 }
 \usage{
-plotEvents(formula, data, control = list(), ...) 
+plotEvents(formula, data, order = TRUE, return.grob = FALSE, control = list(), ...) 
 }
 \arguments{
   \item{formula}{
@@ -23,11 +18,19 @@ plotEvents(formula, data, control = list(), ...)
     an optional data frame in which to interpret the variables
     occurring in the `formula'.
   }
-  \item{control}{ A list of control parameters.}
+   \item{order}{an optional logical value. If "TRUE", the event plot
+    is sorted by the terminal times.}
+  \item{return.grob}{an optional logical value. If "TRUE", a ggplot2 plot grob
+    will be returned.}
+  \item{control}{ a list of control parameters.}
   \item{...}{for future methods}
 }
 \details{
-  The underlying models and assumptions are different for different methods.
+    The argument control defaults to a list with values \code{xlab =
+    "Time", ylab = "Subject", title = "Recurrent event plot",
+    terminal.name = "Terminal event", recurrent.name =
+    "Recurrent event", recurrent.types = NULL}.
+  The function allows user-specified labels.
 }
 \value{
   An object of S3 class \code{"reReg"} representing the fit, with the
@@ -38,22 +41,17 @@ plotEvents(formula, data, control = list(), ...)
 \examples{
 ## readmission data
 data(readmission)
-with(readmission, plotEvents(reSurv(t.stop, id, event, death)))
+plotEvents(reSurv(t.stop, event, death, id) ~ 1, data = readmission)
 
 ## Separate plots by gender
-with(readmission, plotEvents(reSurv(t.stop, id, event, death) ~ sex))
+plotEvents(reSurv(t.stop, event, death, id) ~ sex, data = readmission)
 
 ## Separate plots by gender and chemo type
-with(readmission, plotEvents(reSurv(t.stop, id, event, death) ~ sex:chemo))
+plotEvents(reSurv(t.stop, event, death, id) ~ sex + chemo, data = readmission)
 
-## Multiple recurrent event types
-readmission$event2 <- ifelse(readmission$event == 0, 0, sample(1:3,
-nrow(readmission), TRUE))
-plotEvents(reSurv(t.stop, id, event2, death) ~ sex, data = readmission)
-## plotEvents allows for user specified names
-plotEvents(reSurv(t.stop, id, event2, death) ~ sex, data = readmission,
-           control = list(xlab = "User xlab", ylab = "User ylab", title = "User title",
-           recurrent.types = c("Recurrent type A", "Recurrent type B", "Recurrent type C")))
+## With multiple hypothetical event types
+plotEvents(reSurv(t.stop, event * sample(1:3, 861, TRUE), death, id) ~
+sex + chemo, data = readmission)
 }
 
 

@@ -17,8 +17,8 @@
   \tabular{ll}{
     Package: reReg
     Type: Package
-    Version: 1.1-0
-    Date: 2017-10-30
+    Version: 1.1-3
+    Date: 2018-05-24
     License: GPL(>=3)
     LazyLoad: yes
   }

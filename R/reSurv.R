@@ -1,47 +1,55 @@
-reSurv <- function(time1, id, event, status, time2 = NULL) {
-    ## if (sum(time1 <= 0) > 0 & is.null(time2))
-    ##     stop("Observation time must be positive.")
-    if (!is.null(time2) & any(time1 > time2)) 
-        stop("Stop time must be > start time")
-    if (!is.numeric(time1))
-        stop("Time variable is not numeric")
-    if (sum(time1 < 0) > 0)
-        stop("Observation time must be positive.")
-    if (sum(is.wholenumber(id)) < length(id))
-        stop("ID must be integer values.")
-    if (!is.numeric(time2) & !is.null(time2)) 
-        stop("Time variable is not numeric")
-    if (length(event) != length(time1))
-        stop("Time and status are different lengths")
-    if (length(status) != length(time1))
-        stop("Time and status are different lengths")
+reSurv <- function(time1, time2, event, status, id) {
+    if (missing(time1)) stop("Must have a time argument.")
+    if (!is.numeric(time1)) stop("Time argument (time1) must be numeric.")
+    if (any(time1 < 0)) stop("Time argument (time1) must be positive.")
+    if (any(missing(time2), missing(event), missing(status), missing(id))) {
+        if (missing(event)) stop("Recurrent event indicator (event) is missing.")
+        if (missing(status)) stop("Censoring indicator (status) is missing.")
+        if (missing(id)) {
+            id <- status
+            status <- event
+            event <- time2
+            time2 <- NULL
+        }
+    } 
+    if (!is.numeric(time2) & !is.null(time2)) stop("Time argument (time2) must be numeric.")
+    if (any(time2 < 0) & !is.null(time2)) stop("Time argument (time2) must be positive.")
+    if (!is.null(time2) & any(time1 > time2)) stop("Stop time (time2) must be > start time (time1).")
+    if (length(event) != length(time1)) stop("Time argument and recurrent event indicator (event) are different lengths.")
+    if (length(status) != length(time1)) stop("Time argument and status are different lengths.")
+    ## Multiple event types?
     event2 <- NULL
-    if (is.logical(event)) 
-        event <- as.numeric(event)
+    if (is.logical(event)) event <- as.numeric(event)
     else if (is.numeric(event)) {
         event2 <- event
         event <- ifelse(event == 0, 0, 1)
-        ## temp <- (event == 0 | event == 1)
-        ## event <- ifelse(temp, event, NA)
-        ## if (sum(is.na(event)) > 0) stop("Event must be 0 or 1)")
     }
     else stop("Event must be logical or numeric")
-    if (is.logical(status)) 
-        status <- as.numeric(status)
+    ## Checking status
+    if (is.logical(status)) status <- as.numeric(status)
     else if (is.numeric(status)) {
         temp <- (status == 0 | status == 1)
         status <- ifelse(temp, status, NA)
-        if (sum(is.na(status)) > 0) 
-            stop("Status must be 0 or 1)")
+        if (any(is.na(status))) stop("Status must be 0 or 1)")
     }
     else stop("Status must be logical or numeric")
+    ## Prepare DF
     if (is.null(time2))
         tab <- data.frame(id = id, Time = time1, event = event, status = status, recType = event2)
     else tab <- data.frame(id = id, Time = unlist(lapply(split(time2 - time1, id), cumsum)),
                            event = event, status = status, recType = event2)
-    rc <- list(reDF = tab)
+    rownames(tab) <- NULL
+    ## construct tibby
+    tmp <- tab %>% mutate(status = status * ifelse(!event, 1, NA),
+                          recType = ifelse(recType, recType, NA),
+                          tij = Time * ifelse(event, 1, NA),
+                          Yi = Time * ifelse(!event, 1, NA)) 
+    x <- tmp %>% group_by(id) %>% filter(!is.na(tij)) %>% summarize(tij = list(tij), recType = list(recType))
+    y <- tmp %>% group_by(id) %>% filter(!is.na(Yi)) %>% summarize(Yi = Yi, status = status)
+    tab2 <- x %>% full_join(y, by = "id") %>% arrange(id)
+    rc <- list(reDF = tab, reTb = tab2)
     class(rc) <- "reSurv"
-    invisible(rc)
+    rc
 }
 
 is.reSurv <- function(x) inherits(x, "reSurv")
