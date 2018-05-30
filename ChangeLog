@@ -1,3 +1,6 @@
+2018-05-29 Sy Han Chiou <schiou@utdallas.edu>
+	* Version 1.1.4
+	* Rebuild with oxygen
 2018-05-23 Sy Han Chiou <schiou@utdallas.edu>
 	* Version 1.1-3
 	* Removed plotEvent function and add its features to plot.reSurv

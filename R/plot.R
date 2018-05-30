@@ -1,10 +1,91 @@
 globalVariables(c("Time", "Yi", "id", "recType", "status", "tij"))
 
-## Default Event plot
+#' Produce Event Plots
+#'
+#' Plot the event plot for an \code{reSurv} object.
+#'
+#' The argument \code{control} consists of options with argument defaults to a list with the following values:
+#' \describe{
+#'   \item{xlab}{customizable x-label, default value is "Time".}
+#'   \item{ylab}{customizable y-label, default value is "Subject".}
+#'   \item{title}{customizable title, default value is "Recurrent event plot".}
+#'   \item{terminal.name}{customizable label for terminal event, default value is "Terminal event".}
+#'   \item{recurrent.name}{customizable label for recurrent event, default value is "Recurrent event plot".}
+#'   \item{recurrent.types}{customizable label for recurrent event type, default value is NULL.}
+#'   \item{alpha}{controls the transparency of points.}
+#' }
+#' 
+#' @param x an object of class \code{reSurv}, usually returned by the \code{reSurv} function.
+#' @param data an optional data frame in which to interpret the variables occurring in the "formula".
+#' @param order an optional logical value. If "TRUE", the event plot is sorted by the terminal times; the default value is TRUE.
+#' @param return.grob an optional logical value. If "TRUE", a \code{ggplot2} plot grob will be returned.
+#' @param control a list of control parameters.
+#' @param ... for future developments.
+#' @seealso \code{\link{reSurv}}
+#' @keywords plot.reSurv
+#' @export
+#' 
+#' @examples
+#' data(readmission)
+#' reObj <- with(subset(readmission, id <= 10), reSurv(t.stop, event, death, id))
+#' ## Default labels
+#' plot(reObj)
+#' plot(reObj, order = FALSE)
+#' ## User specified labels
+#' plot(reObj, control = list(xlab = "User xlab", ylab = "User ylab", title = "User title"))
+#'
+#' ## With multiple hypothetical event types
+#' set.seed(1)
+#' reObj2 <- with(readmission, reSurv(t.stop, event * sample(1:3, 861, TRUE), death, id))
+#' plot(reObj2)
+#'
+#' ## With multiple hypothetical event types
+#' set.seed(1)
+#' reObj2 <- with(readmission, reSurv(t.stop, event * sample(1:3, 861, TRUE), death, id))
+#' plot(reObj2)
 plot.reSurv <- function(x, data, order = TRUE, return.grob = FALSE, control = list(), ...) {
     plotEvents(x, data, order = order, return.grob = return.grob, control = control)
 }
 
+#' Produce Event Plots
+#'
+#' Plot the event plot for an \code{reSurv} object, with more flexible options.
+#'
+#' The argument \code{control} consists of options with argument defaults to a list with the following values:
+#' \describe{
+#'   \item{xlab}{customizable x-label, default value is "Time".}
+#'   \item{ylab}{customizable y-label, default value is "Subject".}
+#'   \item{title}{customizable title, default value is "Recurrent event plot".}
+#'   \item{terminal.name}{customizable label for terminal event, default value is "Terminal event".}
+#'   \item{recurrent.name}{customizable label for recurrent event, default value is "Recurrent event plot".}
+#'   \item{recurrent.types}{customizable label for recurrent event type, default value is NULL.}
+#'   \item{alpha}{controls the transparency of points.}
+#' }
+#' 
+#' @param formula  a formula object, with the response on the left of a "~" operator, and the terms on the right.
+#' The response must be a recurrent event survival object as returned by function \code{reSurv}.
+#' @param data an optional data frame in which to interpret the variables occurring in the "formula".
+#' @param order an optional logical value. If "TRUE", the event plot is sorted by the terminal times; the default value is TRUE.
+#' @param return.grob an optional logical value. If "TRUE", a \code{ggplot2} plot grob will be returned.
+#' @param control a list of control parameters.
+#' @param ... for future developments.
+#' @seealso \code{\link{reSurv}}, \code{\link{plot.reSurv}}
+#' @keywords plot.reSurv
+#' @export
+#' 
+#' @examples
+#' data(readmission)
+#' plotEvents(reSurv(t.stop, event, death, id) ~ 1, data = readmission)
+#'
+#' ## Separate plots by gender
+#' plotEvents(reSurv(t.stop, event, death, id) ~ sex, data = readmission)
+#'
+#' ## Separate plots by gender and chemo type
+#' plotEvents(reSurv(t.stop, event, death, id) ~ sex + chemo, data = readmission)
+#'
+#' ## With multiple hypothetical event types
+#' plotEvents(reSurv(t.stop, event * sample(1:3, 861, TRUE), death, id) ~
+#'   sex + chemo, data = readmission)
 plotEvents <- function(formula, data, order = TRUE, return.grob = FALSE, control = list(), ...) {
     ctrl <- plotEvents.control()
     namc <- names(control)
@@ -20,12 +101,26 @@ plotEvents <- function(formula, data, order = TRUE, return.grob = FALSE, control
         if (missing(data)) obj <- eval(formula[[2]], parent.frame())
         else obj <- eval(formula[[2]], data)
         dat <- obj$reTb
-        nX <- attr(terms(formula), "term.labels")
-        if (formula[[3]] != 1) {
-            if (missing(data)) DF <- cbind(obj$reDF, sapply(nX, function(x) eval(as.symbol(paste(x)), parent.frame())))
-            if (!missing(data)) DF <- cbind(obj$reDF, sapply(nX, function(x) eval(as.symbol(paste(x)), data)))
-            ## colnames(DF) <- c(names(obj$reDF), nX)
-            suppressMessages(dat <- left_join(obj$reTb, unique(select(DF, id, nX))))
+        nX <- length(formula[[3]])
+        if (formula[[3]] != 1 && nX == 1) {
+            if (missing(data)) DF <- cbind(obj$reDF, eval(formula[[3]], parent.frame()))
+            if (!missing(data)) DF <- cbind(obj$reDF, eval(formula[[3]], data))
+            colnames(DF) <- c(names(obj$reDF), paste0(formula[[3]], collapse = ""))
+            suppressMessages(dat <- left_join(obj$reTb, unique(select(DF, id, paste(formula[[3]])))))
+        }
+        if (formula[[3]] != 1 && nX > 1) {
+            DF <- obj$reDF
+            if (missing(data)) {
+                for (i in 2:nX) {
+                    DF <- cbind(DF, eval(formula[[3]][[i]], parent.frame()))
+                }
+            } else {
+                for (i in 2:nX) {
+                    DF <- cbind(DF, eval(formula[[3]][[i]], data))
+                }
+            }
+            colnames(DF) <- c(names(obj$reDF), sapply(2:nX, function(x) paste0(formula[[3]][[x]], collapse = "")))
+            suppressMessages(dat <- left_join(obj$reTb, unique(select(DF, id, paste(formula[[3]][-1])))))
         }
     }
     if (order) {
@@ -98,8 +193,22 @@ plotEvents.control <- function(xlab = "Time", ylab = "Subject", title = "Recurre
          alpha = alpha)
 }
 
-##################################################################################
-
+#' Plotting Estimated Baseline Cumulative Rate Functions
+#'
+#' Plot the estimated baseline cumulative rate function and harzard function if available.
+#'
+#' @param x an object of class \code{reReg}, usually returned by the \code{reReg} function.
+#' @param ... for future methods.
+#'
+#' @seealso \code{\link{reReg}}
+#' @export
+#' @keywords plot.reReg
+#' @examples
+#' data(readmission)
+#' fit <- reReg(reSurv(t.stop, event, death, id) ~ sex + chemo,
+#'              data = subset(readmission, id < 50),
+#'              method = "am.XCHWY", se = "resampling", B = 20)
+#' plot(fit)
 plot.reReg <- function(x, ...) {
     options(warn = -1)
     if (!is.reReg(x)) stop("Response must be a reReg class")
@@ -148,6 +257,37 @@ plot.reReg <- function(x, ...) {
     invisible(out)
 }
 
+#' Plotting the baseline rate function
+#'
+#' Plot the baseline rate function after fitting \code{reReg}.
+#' 
+#' The argument \code{control} consists of options with argument defaults to a list with the following values:
+#' \describe{
+#'   \item{xlab}{customizable x-label, default value is "Time".}
+#'   \item{ylab}{customizable y-label, default value is "Subject".}
+#'   \item{title}{customizable title, default value is "Recurrent event plot".}
+#' }
+#'
+#' @param x an object of class \code{reReg}, usually returned by the \code{reReg} function.
+#' @param control a list of control parameters.
+#' @param ... for future developments.
+#'
+#' @seealso \code{\link{reReg}}
+#' @export
+#'
+#' @examples
+#' ## readmission data
+#' data(readmission)
+#' set.seed(123)
+#' fit <- reReg(reSurv(t.stop, event, death, id) ~ sex + chemo,
+#'                    data = subset(readmission, id < 50),
+#'                    method = "am.XCHWY", se = "resampling", B = 20)
+#' ## Plot both the baseline cumulative rate and hazard function
+#' plot(fit)
+#' ## Plot baseline cumulative rate function
+#' plotRate(fit)
+#' ## Plot with user-specified labels
+#' plotRate(fit, control = list(xlab = "User xlab", ylab = "User ylab", title = "User title")) 
 plotRate <- function(x, control = list(), ...) {
     if (x$method == "sc.XCYH") stop("Rate function plot is not yet available for method = sc.XCYH") 
     ctrl <- plotEvents.control()
@@ -179,7 +319,37 @@ plotRate <- function(x, control = list(), ...) {
     options(warn = 0)
 }
 
-
+#' Plotting the baseline hazard function
+#'
+#' Plot the baseline hazard function after fitting \code{reReg}.
+#'
+#' The argument \code{control} consists of options with argument defaults to a list with the following values:
+#' \describe{
+#'   \item{xlab}{customizable x-label, default value is "Time".}
+#'   \item{ylab}{customizable y-label, default value is "Subject".}
+#'   \item{title}{customizable title, default value is "Recurrent event plot".}
+#' }
+#'
+#' @param x an object of class \code{reReg}, usually returned by the \code{reReg} function.
+#' @param control a list of control parameters.
+#' @param ... for future developments.
+#' 
+#' @seealso \code{\link{reReg}}
+#' @export
+#'
+#' @examples
+#' ## readmission data
+#' data(readmission)
+#' set.seed(123)
+#' fit <- reReg(reSurv(t.stop, event, death, id) ~ sex + chemo,
+#'              data = subset(readmission, id < 50),
+#'              method = "am.XCHWY", se = "resampling", B = 20)
+#' ## Plot both the baseline cumulative rate and hazard function
+#' plot(fit)
+#' ## Plot baseline cumulative hazard function
+#' plotHaz(fit)
+#' ## Plot with user-specified labels
+#' plotHaz(fit, control = list(xlab = "User xlab", ylab = "User ylab", title = "User title"))  
 plotHaz <- function(x, control = list(), ...) {
     if (x$method == "sc.XCYH") stop("Rate function plot is not yet available for method = sc.XCYH")
     ctrl <- plotEvents.control()

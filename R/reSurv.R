@@ -1,3 +1,24 @@
+#' @name reSurv
+#' @rdname reSurv
+#' @title Create an \code{reSurv} Object
+#'
+#' @description Create a recurrent event survival object, used as a response variable in reReg model formula.
+#'
+#' @param time1 when "time2" is provided, this vector is treated as the starting time for the gap time between two successive recurrent events.
+#' In the absence of "time2", this is the observation time of recurrence on calendar time scale, in which, the time corresponds to the time since entry/inclusion in the study.
+#' @param time2 an optional vector for ending time for the gap time between two successive recurrent events.
+#' @param event a binary vector used as the recurrent event indicator.
+#' @param status a binary vector used as the status indicator for the terminal event.
+#' @param id observation subject's id
+#' @param x an \code{reSurv} object.
+NULL
+
+#' @rdname reSurv
+#' @export
+#' @examples
+#' data(readmission)
+#' with(readmission, reSurv(t.stop, event, death, id))
+#' with(readmission, reSurv(t.start, t.stop, event, death, id))
 reSurv <- function(time1, time2, event, status, id) {
     if (missing(time1)) stop("Must have a time argument.")
     if (!is.numeric(time1)) stop("Time argument (time1) must be numeric.")
@@ -52,6 +73,9 @@ reSurv <- function(time1, time2, event, status, id) {
     rc
 }
 
+#' @rdname reSurv
+#' @export
 is.reSurv <- function(x) inherits(x, "reSurv")
+
 is.reReg <- function(x) inherits(x, "reReg")
 is.wholenumber <- function(x, tol = .Machine$double.eps^0.5)  abs(x - round(x)) < tol
