@@ -2,33 +2,40 @@
 % Please edit documentation in R/reSurv.R
 \name{reSurv}
 \alias{reSurv}
-\alias{reSurv}
 \alias{is.reSurv}
 \title{Create an \code{reSurv} Object}
 \usage{
-reSurv(time1, time2, event, status, id)
+reSurv(time1, time2, id, event, status, origin = 0)
 
 is.reSurv(x)
 }
 \arguments{
-\item{time1}{when "time2" is provided, this vector is treated as the starting time for the gap time between two successive recurrent events.
-In the absence of "time2", this is the observation time of recurrence on calendar time scale, in which, the time corresponds to the time since entry/inclusion in the study.}
+\item{time1}{when "\code{time2}" is provided, this vector is treated as the starting time for the gap time between two successive recurrent events.
+In the absence of "\code{time2}", this is the observation time of recurrence on calendar time scale, in which, the time corresponds to the time since entry/inclusion in the study.}
 
 \item{time2}{an optional vector for ending time for the gap time between two successive recurrent events.}
 
-\item{event}{a binary vector used as the recurrent event indicator.}
+\item{id}{subject's id.}
 
-\item{status}{a binary vector used as the status indicator for the terminal event.}
+\item{event}{a binary vector used as the recurrent event indicator. \code{event = 1} for recurrent times.}
 
-\item{id}{observation subject's id}
+\item{status}{a binary vector used as the status indicator for the terminal event. \code{status = 0} for censored times.}
+
+\item{origin}{a numerical vector indicating the time origin of subjects.
+When \code{origin} is a scalar, \code{reSurv} assumes all subjects have the same origin.
+Otherwise, \code{origin} needs to be a numerical vector, with length equals to the number of subjects.
+In this case, each element corresponds to different origins for different subjects.
+This argument is only needed when "\code{time2}" is missing.}
 
 \item{x}{an \code{reSurv} object.}
 }
 \description{
-Create a recurrent event survival object, used as a response variable in reReg model formula.
+Create a recurrent event survival object, used as a response variable in \code{reReg}.
 }
 \examples{
-data(readmission)
-with(readmission, reSurv(t.stop, event, death, id))
-with(readmission, reSurv(t.start, t.stop, event, death, id))
+data(readmission, package = "frailtypack")
+attach(readmission)
+reSurv(t.stop, id, event, death)
+reSurv(t.start, t.stop, id, event, death)
+detach(readmission)
 }

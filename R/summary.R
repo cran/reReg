@@ -1,18 +1,23 @@
+#' @importFrom dplyr rename
+#' @export
 print.reSurv <- function(x, ...) {
-   print(x$reTb)
+    x$reTb %>% rename(recTime = tij, temTime = Yi, temStatus = status) %>% print(n = 5)
 }
 
+#' @export
 print.reReg <- function(x, ...) {
     if (!is.reReg(x))
         stop("Must be a reReg x")
-    cat("Call:\n")
+    cat("Call: ")
     print(x$call)
     if (all(!is.na(x$alpha))) {
         if (x$method != "cox.LWYY") {
             if (x$method == "am.XC") 
                 cat("\nMethod: Joint Scale-Change Model \n")
             if (x$method == "am.GL")
-                cat("\nMethod: Ghosh-Lin Model \n")
+                cat("\nMethod: Ghosh-Lin Model (Accelerated mean model)\n")
+            if (x$method == "cox.GL")
+                cat("\nMethod: Ghosh-Lin Model (Cox type model)\n")
             if (x$method == "cox.HW")
                 cat("\nMethod: Huang-Wang Model \n")
             cat("\nCoefficients:\n")
@@ -40,10 +45,14 @@ print.reReg <- function(x, ...) {
     }
 }
 
+#' @export
 summary.reReg <- function(object, ...) {
     if (!is.reReg(object)) stop("Must be a reReg x")
     if (all(!is.na(object$alpha))) {
-        if (object$se == "NULL") object$alphaSE <- object$betaSE <- NA
+        if (object$se == "NULL") {
+            if (object$method == "cox.LWYY") object$betaSE <- NA
+            else object$alphaSE <- object$betaSE <- NA
+        }
         tabA <- cbind(Estimate = round(object$alpha, 3),
                       StdErr = round(object$alphaSE, 3),
                       z.value = round(object$alpha / object$alphaSE, 3),
@@ -79,6 +88,7 @@ summary.reReg <- function(object, ...) {
     out
 }
 
+#' @export
 print.summary.reReg <- function(x, ...) {
     cat("Call: ")
     print(x$call)
@@ -118,7 +128,9 @@ print.summary.reReg <- function(x, ...) {
             }
         }
         if (x$method == "cox.LWYY") {
-            cat("\nMethod: Lin-Wei-Yang-Ying method \n")
+            if (is.null(x$call[["se"]]))
+                cat("\nMethod: Lin-Wei-Yang-Ying method (fitted with coxph with robust variance)\n")
+            else cat("\nMethod: Lin-Wei-Yang-Ying method \n")
             cat("\nCoefficients effect:\n")
             printCoefmat(as.data.frame(x$tabA), P.values = TRUE, has.Pvalue = TRUE)
         }
@@ -133,7 +145,12 @@ print.summary.reReg <- function(x, ...) {
     cat("\n")
 }
 
+#' @export
 coef.reReg <- function(object, ...) {
     as.numeric(c(object$alpha, object$beta))
 }
 
+#' @export
+vcov.reReg <- function(object, ...) {
+    list(alpha.vcov = object$alphaVar, beta.vcov = object$betaVar)
+}

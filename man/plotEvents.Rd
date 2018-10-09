@@ -4,53 +4,58 @@
 \alias{plotEvents}
 \title{Produce Event Plots}
 \usage{
-plotEvents(formula, data, order = TRUE, return.grob = FALSE,
-  control = list(), ...)
+plotEvents(formula, data, order = TRUE, control = list(), ...)
 }
 \arguments{
-\item{formula}{a formula object, with the response on the left of a "~" operator, and the terms on the right.
+\item{formula}{a formula object, with the response on the left of a "~" operator,
+and the predictors on the right.
 The response must be a recurrent event survival object as returned by function \code{reSurv}.}
 
-\item{data}{an optional data frame in which to interpret the variables occurring in the "formula".}
+\item{data}{an optional data frame in which to interpret the variables occurring in the "\code{formula}".}
 
-\item{order}{an optional logical value. If "TRUE", the event plot is sorted by the terminal times; the default value is TRUE.}
-
-\item{return.grob}{an optional logical value. If "TRUE", a \code{ggplot2} plot grob will be returned.}
+\item{order}{an optional logical value indicating whether the event plot will be sorted by the terminal times.}
 
 \item{control}{a list of control parameters.}
 
-\item{...}{for future developments.}
+\item{...}{graphical parameters to be passed to methods.
+These include \code{xlab}, \code{ylab} and \code{main}.}
+}
+\value{
+A \code{ggplot} object.
 }
 \description{
-Plot the event plot for an \code{reSurv} object, with more flexible options.
+Plot the event plot for an \code{reSurv} object.
+The function is similar to \code{plot.reSurve} but with more flexible options.
 }
 \details{
-The argument \code{control} consists of options with argument defaults to a list with the following values:
+The argument \code{control} consists of options with argument defaults to a
+list with the following values:
 \describe{
   \item{xlab}{customizable x-label, default value is "Time".}
   \item{ylab}{customizable y-label, default value is "Subject".}
-  \item{title}{customizable title, default value is "Recurrent event plot".}
+  \item{main}{customizable title, default value is "Recurrent event plot".}
   \item{terminal.name}{customizable label for terminal event, default value is "Terminal event".}
-  \item{recurrent.name}{customizable label for recurrent event, default value is "Recurrent event plot".}
-  \item{recurrent.types}{customizable label for recurrent event type, default value is NULL.}
-  \item{alpha}{controls the transparency of points.}
+  \item{recurrent.name}{customizable legend title for recurrent event, default value is "Recurrent events".}
+  \item{recurrent.types}{customizable label for recurrent event type, default value is \code{NULL}.}
+  \item{alpha}{between 0 and 1, controls the transparency of points.}
 }
+The \code{xlab}, \code{ylab} and \code{main} parameters can also be passed down without specifying a \code{control} list. See \bold{Examples}.
 }
 \examples{
-data(readmission)
-plotEvents(reSurv(t.stop, event, death, id) ~ 1, data = readmission)
+data(readmission, package = "frailtypack")
+plotEvents(reSurv(t.stop, id, event, death) ~ 1, data = readmission)
 
 ## Separate plots by gender
-plotEvents(reSurv(t.stop, event, death, id) ~ sex, data = readmission)
+plotEvents(reSurv(t.stop, id, event, death) ~ sex, data = readmission)
 
 ## Separate plots by gender and chemo type
-plotEvents(reSurv(t.stop, event, death, id) ~ sex + chemo, data = readmission)
+plotEvents(reSurv(t.stop, id, event, death) ~ sex + chemo, data = readmission)
 
 ## With multiple hypothetical event types
-plotEvents(reSurv(t.stop, event * sample(1:3, 861, TRUE), death, id) ~
+plotEvents(reSurv(t.stop, id, event * sample(1:3, 861, TRUE), death) ~
   sex + chemo, data = readmission)
 }
 \seealso{
 \code{\link{reSurv}}, \code{\link{plot.reSurv}}
 }
-\keyword{plot.reSurv}
+\keyword{Plots}

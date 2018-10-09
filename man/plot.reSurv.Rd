@@ -2,59 +2,65 @@
 % Please edit documentation in R/plot.R
 \name{plot.reSurv}
 \alias{plot.reSurv}
-\title{Produce Event Plots}
+\title{Produce Event Plot or Cumulative Sample Mean Function Plot}
 \usage{
-\method{plot}{reSurv}(x, data, order = TRUE, return.grob = FALSE,
-  control = list(), ...)
+\method{plot}{reSurv}(x, CSM = FALSE, order = TRUE, control = list(),
+  ...)
 }
 \arguments{
 \item{x}{an object of class \code{reSurv}, usually returned by the \code{reSurv} function.}
 
-\item{data}{an optional data frame in which to interpret the variables occurring in the "formula".}
+\item{CSM}{an optional logical value indicating whether the cumulative sample mean (CSM) function will
+be plotted instead of the event plot (default).}
 
-\item{order}{an optional logical value. If "TRUE", the event plot is sorted by the terminal times; the default value is TRUE.}
+\item{order}{an optional logical value indicating whether the event plot (when \code{CSM = FALSE})
+will be sorted by the terminal times.}
 
-\item{return.grob}{an optional logical value. If "TRUE", a \code{ggplot2} plot grob will be returned.}
+\item{control}{a list of control parameters. See \bold{Details}.}
 
-\item{control}{a list of control parameters.}
-
-\item{...}{for future developments.}
+\item{...}{graphical parameters to be passed to methods.
+These include \code{xlab}, \code{ylab} and \code{main}.}
+}
+\value{
+A \code{ggplot} object.
 }
 \description{
-Plot the event plot for an \code{reSurv} object.
+Plot the event plot or the cumulative sample mean (CSM) function for an \code{reSurv} object.
 }
 \details{
 The argument \code{control} consists of options with argument defaults to a list with the following values:
 \describe{
   \item{xlab}{customizable x-label, default value is "Time".}
-  \item{ylab}{customizable y-label, default value is "Subject".}
-  \item{title}{customizable title, default value is "Recurrent event plot".}
+  \item{ylab}{customizable y-label, default value is "Subject" for event plot and "Cumulative mean" for CSM plot.}
+  \item{main}{customizable title, the default value is "Recurrent event plot" when \code{CSM = FALSE} and
+"Sample cumulative mean function plot" when \code{CSM = TRUE}.}
   \item{terminal.name}{customizable label for terminal event, default value is "Terminal event".}
-  \item{recurrent.name}{customizable label for recurrent event, default value is "Recurrent event plot".}
-  \item{recurrent.types}{customizable label for recurrent event type, default value is NULL.}
-  \item{alpha}{controls the transparency of points.}
+  \item{recurrent.name}{customizable legend title for recurrent event, default value is "Recurrent events".}
+  \item{recurrent.types}{customizable label for recurrent event type, default value is \code{NULL}.}
+  \item{alpha}{between 0 and 1, controls the transparency of points.}
 }
+The \code{xlab}, \code{ylab} and \code{main} parameters can also be passed down without specifying a \code{control} list.
 }
 \examples{
-data(readmission)
-reObj <- with(subset(readmission, id <= 10), reSurv(t.stop, event, death, id))
+data(readmission, package = "frailtypack")
+reObj <- with(subset(readmission, id <= 10), reSurv(t.stop, id, event, death))
+
+## Event plots:
 ## Default labels
 plot(reObj)
 plot(reObj, order = FALSE)
 ## User specified labels
-plot(reObj, control = list(xlab = "User xlab", ylab = "User ylab", title = "User title"))
+plot(reObj, control = list(xlab = "User xlab", ylab = "User ylab", main = "User title"))
 
 ## With multiple hypothetical event types
 set.seed(1)
-reObj2 <- with(readmission, reSurv(t.stop, event * sample(1:3, 861, TRUE), death, id))
+reObj2 <- with(readmission, reSurv(t.stop, id, event * sample(1:3, 861, TRUE), death))
 plot(reObj2)
 
-## With multiple hypothetical event types
-set.seed(1)
-reObj2 <- with(readmission, reSurv(t.stop, event * sample(1:3, 861, TRUE), death, id))
-plot(reObj2)
+## CSM plots
+plot(reObj, CSM = TRUE)
 }
 \seealso{
 \code{\link{reSurv}}
 }
-\keyword{plot.reSurv}
+\keyword{Plots}

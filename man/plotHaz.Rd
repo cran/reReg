@@ -2,33 +2,42 @@
 % Please edit documentation in R/plot.R
 \name{plotHaz}
 \alias{plotHaz}
-\title{Plotting the baseline hazard function}
+\title{Produce the Baseline Cumulative Hazard Function for the Censoring Time}
 \usage{
-plotHaz(x, control = list(), ...)
+plotHaz(x, smooth = FALSE, control = list(), ...)
 }
 \arguments{
 \item{x}{an object of class \code{reReg}, usually returned by the \code{reReg} function.}
 
+\item{smooth}{an optional logical value indicating whether the \emph{loess} smoothing will be applied.}
+
 \item{control}{a list of control parameters.}
 
-\item{...}{for future developments.}
+\item{...}{graphical parameters to be passed to methods.
+These include \code{xlab}, \code{ylab} and \code{main}.}
+}
+\value{
+A \code{ggplot} object.
 }
 \description{
-Plot the baseline hazard function after fitting \code{reReg}.
+Plot the baseline cumulative hazard function for an \code{reReg} object.
 }
 \details{
-The argument \code{control} consists of options with argument defaults to a list with the following values:
+The argument \code{control} consists of options with argument
+defaults to a list with the following values:
 \describe{
   \item{xlab}{customizable x-label, default value is "Time".}
-  \item{ylab}{customizable y-label, default value is "Subject".}
-  \item{title}{customizable title, default value is "Recurrent event plot".}
+  \item{ylab}{customizable y-label, default value is empty, e.g., "".}
+  \item{main}{customizable title, default value is "Baseline cumulative hazard function".}
 }
+These arguments can also be passed down without specifying a \code{control} list.
+See \bold{Examples}.
 }
 \examples{
 ## readmission data
-data(readmission)
+data(readmission, package = "frailtypack")
 set.seed(123)
-fit <- reReg(reSurv(t.stop, event, death, id) ~ sex + chemo,
+fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
              data = subset(readmission, id < 50),
              method = "am.XCHWY", se = "resampling", B = 20)
 ## Plot both the baseline cumulative rate and hazard function
@@ -36,8 +45,9 @@ plot(fit)
 ## Plot baseline cumulative hazard function
 plotHaz(fit)
 ## Plot with user-specified labels
-plotHaz(fit, control = list(xlab = "User xlab", ylab = "User ylab", title = "User title"))  
+plotHaz(fit, control = list(xlab = "User xlab", ylab = "User ylab", main = "User title"))  
 }
 \seealso{
-\code{\link{reReg}}
+\code{\link{reReg}} \code{\link{plot.reReg}}
 }
+\keyword{Plots}

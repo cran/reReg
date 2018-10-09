@@ -2,26 +2,51 @@
 % Please edit documentation in R/plot.R
 \name{plot.reReg}
 \alias{plot.reReg}
-\title{Plotting Estimated Baseline Cumulative Rate Functions}
+\title{Plotting Baseline Cumulative Rate Function and Baseline Cumulative Hazard Function}
 \usage{
-\method{plot}{reReg}(x, ...)
+\method{plot}{reReg}(x, baseline = c("both", "rate", "hazard"),
+  smooth = FALSE, control = list(), ...)
 }
 \arguments{
 \item{x}{an object of class \code{reReg}, usually returned by the \code{reReg} function.}
 
-\item{...}{for future methods.}
+\item{baseline}{a character string specifying which baseline function to plot.
+If \code{baseline = "both"} (default), both the baseline cumulative rate and baseline cumulative hazard function will be plotted in separate panels within the same display;
+if \code{baseline = "rate"}, only the baseline cumulative rate function will be plotted;
+if \code{baseline = "hazard"}, only the baseline cumulative hazard function will be plotted.}
+
+\item{smooth}{an optional logical value indicating whether to add a smooth curve (\emph{loess} smooth).}
+
+\item{control}{a list of control parameters. See \bold{Details}.}
+
+\item{...}{graphical parameters to be passed to methods.
+These include \code{xlab}, \code{ylab} and \code{main}.}
+}
+\value{
+A \code{ggplot} object.
 }
 \description{
-Plot the estimated baseline cumulative rate function and harzard function if available.
+Plot the baseline cumulative rate function and the baseline cumulative hazard function
+(if applicable) for an \code{reReg} object.
+}
+\details{
+The argument \code{control} consists of options with argument defaults to a list with the following values:
+\describe{
+  \item{xlab}{customizable x-label, default value is "Time".}
+  \item{ylab}{customizable y-label, default value is empty, e.g., "".}
+  \item{main}{customizable title, default value are "Baseline cumulative rate and hazard function" when \code{baseline = "both"},
+"Baseline cumulative rate function" when \code{baseline = "rate"}, and "Baseline cumulative hazard function" when \code{baseline = "hazard"}.}
+}
 }
 \examples{
-data(readmission)
-fit <- reReg(reSurv(t.stop, event, death, id) ~ sex + chemo,
-             data = subset(readmission, id < 50),
-             method = "am.XCHWY", se = "resampling", B = 20)
+data(readmission, package = "frailtypack")
+fit <- reReg(reSurv(t.stop, id, event, death) ~ sex + chemo,
+             data = subset(readmission, id < 50))
 plot(fit)
+plot(fit, baseline = "rate")
+plot(fit, baseline = "rate", xlab = "Time (days)")
 }
 \seealso{
 \code{\link{reReg}}
 }
-\keyword{plot.reReg}
+\keyword{Plots}

@@ -7,27 +7,42 @@
 \alias{reReg-packages}
 \title{reReg: Recurrent Event Regression}
 \description{
-Recurrent event data arise frequently in various fields such as biomedical sciences, public health, engineering, and social sciences.
-In many instances, the observation of the recurrent event process can be stopped by the occurrence of a correlated failure event,
-such as death or treatment failure. As such, we implement a collection of regression models for recurrent event process and failure time.
+The package provides easy access to fit regression models to recurrent event data.
+The available implementations allow users to explore recurrent data through event plot and cumulative sample mean function plot,
+fit semiparametric regression models under different assumptions,
+and simulate recurrent event data.
 }
 \references{
-Xu, G., Chiou, S.H., Huang, C.-Y., Wang, M.-C. and Yan, J. (2017). Joint Scale-change Models for Recurrent Events and Failure Time.
-\emph{Journal of the American Statistical Association} 112.518: 796-805.
+Xu, G., Chiou, S.H., Huang, C.-Y., Wang, M.C. and Yan, J. (2017).
+Joint Scale-change Models for Recurrent Events and Failure Time.
+\emph{Journal of the American Statistical Association}, \bold{112}(518): 796--805.
 
 Lin, D., Wei, L., Yang, I. and Ying, Z. (2000). Semiparametric Regression for the Mean and Rate Functions of Recurrent Events.
-\emph{Journal of the Royal Statistical Society: Series B (Methodological)}, \bold{62}: 711 -- 730.
+\emph{Journal of the Royal Statistical Society: Series B (Methodological)}, \bold{62}: 711--730.
 
 Wang, M.C., Qin, J., and Chiang, C.T. (2001). Analyzing Recurrent Event Data with Informative Censoring.
-\emph{Journal of the American Statistical Association} \bold{96}{455}: 1057--1065.
+\emph{Journal of the American Statistical Association}, \bold{96}(455): 1057--1065.
 
-Ghosh, D. and D.Y. Lin (2003). Semiparametric Analysis of Recurrent Events Data in the Presence of Dependent Censoring.
-\emph{Biometrics}, \bold{59}: 877 -- 885.
+Ghosh, D. and Lin, D.Y. (2003). Semiparametric Analysis of Recurrent Events Data in the Presence of Dependent Censoring.
+\emph{Biometrics}, \bold{59}: 877--885.
 
-Huang, C.Y. and Wang, M.C. (2004). Joint Modeling and Estimation for Recurrent Event Processes and Failure Time Data.
-\emph{Journal of the American Statistical Association} \bold{99}(468), 1153--1165.
+Huang, C.-Y. and Wang, M.C. (2004). Joint Modeling and Estimation for Recurrent Event Processes and Failure Time Data.
+\emph{Journal of the American Statistical Association}, \bold{99}(468): 1153--1165.
+}
+\seealso{
+Useful links:
+\itemize{
+  \item \url{http://github.com/stc04003/reReg}
+  \item Report bugs at \url{http://github.com/stc04003/reReg/issues}
+}
+
 }
 \author{
 \strong{Maintainer}: Sy Han (Steven) Chiou \email{schiou@utdallas.edu}
+
+Authors:
+\itemize{
+  \item Chiung-Yu  Huang \email{ChiungYu.Huang@ucsf.edu}
+}
 
 }
