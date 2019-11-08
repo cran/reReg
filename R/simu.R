@@ -1,4 +1,4 @@
-globalVariables(c("m", "x2", "Z")) ## global variables for simDat
+globalVariables(c("m", "x2", "Z")) ## global variables for simSC
 
 ###################################################################################
 ## Codes to generate simulated data
@@ -16,12 +16,12 @@ invHaz <- function(t, z, exa, exb) (exp(8 * t * exa / exb / z) - 1) / exa
 
 #' Function to generate simulated data
 #'
-#' The function \code{simDat} generates simulated recurrent event data from either
+#' The function \code{simSC} generates simulated recurrent event data from either
 #' a Cox-type model, an accelerated mean model, or a scale-change model.
 #' The censoring time could be either independent (given covariates) or informative.
 #' The simulated data is used for illustration.
 #'
-#' The function \code{simDat} generates simulated recurrent event data under different
+#' The function \code{simSC} generates simulated recurrent event data under different
 #' scenarios based on the following assumptions.
 #' See \bold{Details} in \code{\link{reReg}} for a more complete model assumptions.
 #' \describe{
@@ -46,8 +46,11 @@ invHaz <- function(t, z, exa, exb) (exp(8 * t * exa / exb / z) - 1) / exa
 #' @param b a numeric vector of parameter of length 2.
 #' @param indCen a logical value indicating whether the censoring assumption is imposed.
 #' When \code{indCen = TRUE}, we set \eqn{Z = 1}.
-#' Otherwise, \eqn{Z} is generated from a gamma distribution with mean 1 and variance 0.25
-#' (e.g., \code{rgamma(1, 4, 4)}). See \bold{Details}.
+#' Otherwise, \eqn{Z} is generated from a unit-mean gamma distribution 
+#' See \bold{Details}. 
+#' @param zVar a numeric variable specifying the variance of \eqn{Z}.
+#' This is only needed when \eqn{indCen} is TRUE.
+#' The default value is 0.25.
 #' @param type a character string specifying the underlying model. See \bold{Details}
 #' @param tau a numeric value specifying the maximum observation time.
 #' @param summary a logical value indicating whether a brief data summary will be printed.
@@ -55,17 +58,14 @@ invHaz <- function(t, z, exa, exb) (exp(8 * t * exa / exb / z) - 1) / exa
 #' @seealso \code{\link{reReg}}
 #' @export
 #'
-#' @importFrom tibble as_tibble
 #'
-#' @examples
-#' set.seed(123)
-#' simDat(200, c(-1, 1), c(-1, 1), summary = TRUE)
-simDat <- function(n, a, b, indCen = TRUE, type = c("cox", "am", "sc"), tau = 60, summary = FALSE) {
+#' @example inst/examples/ex_simu.R
+simSC <- function(n, a, b, indCen = TRUE, type = c("cox", "am", "sc"), tau = 60, zVar = .25, summary = FALSE) {
     type <- match.arg(type)
     if (length(a) != 2L) stop("Require length(a) = 2.")
     if (length(b) != 2L) stop("Require length(b) = 2.")
     simOne <- function(id) {
-        z <- ifelse(indCen, 1, rgamma(1, 4, 4))
+        z <- ifelse(indCen, 1, rgamma(1, 1/zVar, 1/zVar))
         x <- c(sample(0:1, 1), rnorm(1))
         exa <- c(exp(x %*% a))
         exb <- c(exp(x %*% b))
@@ -97,24 +97,25 @@ simDat <- function(n, a, b, indCen = TRUE, type = c("cox", "am", "sc"), tau = 60
                               Z = z, m = m, x1 = x[1], x2 = x[2]))
         }
     }
-    dat <- as_tibble(do.call(rbind, lapply(1:n, simOne)))
+    dat <- data.frame(do.call(rbind, lapply(1:n, simOne)))
     if (summary) {
         cat("\n")
         cat("Summary results for number of recurrent event per subject:\n")
-        base <- dat %>% group_by(id) %>% summarize(m = unique(m), d = max(status),
-                                                   x1 = unique(x1), x2 = unique(x2))
-        d <- base$d
+        dat <- dat[order(dat$id),]
+        base <- dat[cumsum(table(dat$id)),] 
+        ## base <- do.call(rbind, lapply(split(subset(dat, select = -c(Time, event, status, Z)), dat$id), unique))
+        d <- base$status
         x1 <- base$x1
         print(summary(base$m))
         cat("\n")
-        cat(paste("Number of failures: ", sum(d), " (", 100 * sum(d) / length(d), "%); ",
-                  "Number of censored events: ", sum(d < 1), " (", 100 * sum(d < 1) / length(d), "%)\n\n",
+        cat(paste("Number of failures: ", sum(d), " (", round(100 * sum(d) / length(d), 2), "%); ",
+                  "Number of censored events: ", sum(d < 1), " (", round(100 * sum(d < 1) / length(d), 2), "%)\n\n",
                   sep = ""))
-        cat(paste("Number of x1 == 1: ", sum(x1), " (", 100 * sum(x1) / length(x1), "%); ",
-                  "Number of x1 == 0: ", sum(x1 < 1), " (", 100 * sum(x1 < 1) / length(x1), "%)\n", sep = ""))
+        cat(paste("Number of x1 == 1: ", sum(x1), " (", round(100 * sum(x1) / length(x1), 2), "%); ",
+                  "Number of x1 == 0: ", sum(x1 < 1), " (", round(100 * sum(x1 < 1) / length(x1), 2), "%)\n", sep = ""))
         cat("Summary results for x2:\n")
         print(summary(base$x2))
         cat("\n\n")
     }
-    return(dat %>% select(-m, -Z))
+    return(subset(dat, select = c(-m, -Z)))
 }

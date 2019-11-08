@@ -1,6 +1,6 @@
 Package: reReg
 Title: Recurrent Event Regression
-Version: 1.1.6
+Version: 1.2.0
 Authors@R: c(person(given = "Sy Han (Steven)", family = "Chiou",
 	   email = "schiou@utdallas.edu",
 	   role = c("aut", "cre")),
@@ -13,14 +13,13 @@ Encoding: UTF-8
 LazyData: true
 URL: http://github.com/stc04003/reReg
 BugReports: http://github.com/stc04003/reReg/issues
-Imports: BB, nleqslv, SQUAREM, survival, plyr, ggplot2, purrr, dplyr,
-        tidyr, MASS, methods, tibble
-RoxygenNote: 6.1.0
+Imports: BB, nleqslv, SQUAREM, survival, ggplot2, MASS, methods, reda
+        (>= 0.5.0), scam
+RoxygenNote: 6.1.1
 NeedsCompilation: yes
-Packaged: 2018-10-19 06:33:56 UTC; schiou
-Suggests: frailtypack
+Packaged: 2019-11-07 22:52:32 UTC; schiou
 Author: Sy Han (Steven) Chiou [aut, cre],
   Chiung-Yu Huang [aut]
 Maintainer: Sy Han (Steven) Chiou <schiou@utdallas.edu>
 Repository: CRAN
-Date/Publication: 2018-10-22 19:40:03 UTC
+Date/Publication: 2019-11-08 06:20:02 UTC
