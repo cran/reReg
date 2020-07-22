@@ -2,63 +2,71 @@
 % Please edit documentation in R/simu.R
 \name{simSC}
 \alias{simSC}
-\title{Function to generate simulated data}
+\title{Function to generate simulated recurrent event data}
 \usage{
-simSC(n, a, b, indCen = TRUE, type = c("cox", "am", "sc"), tau = 60,
-  zVar = 0.25, summary = FALSE)
+simSC(
+  n,
+  a1 = a2,
+  b1 = b2,
+  a2 = a1,
+  b2 = b1,
+  type = "cox",
+  zVar = 0.25,
+  tau = 60,
+  summary = FALSE
+)
 }
 \arguments{
 \item{n}{number of observation.}
 
-\item{a}{a numeric vector of parameter of length 2.}
+\item{a1, a2, b1, b2}{are numeric vectors of length 2.
+These correspond to the \eqn{\alpha}, \eqn{\beta}, \eqn{\eta}, and \eqn{\theta} in the joint model. See \bold{Details}}
 
-\item{b}{a numeric vector of parameter of length 2.}
+\item{type}{is a character string specifying the underlying model.
+The rate function type and the hazard function type are separated by a vertical bar "|",
+with the rate function on the left. For example, \code{type = "cox|am"} generates the recurrent process from a Cox model and
+the terminal event from an accelerated mean model. Setting \code{type = "cox"} gives \code{type = "cox|cox"}.}
 
-\item{indCen}{a logical value indicating whether the censoring assumption is imposed.
-When \code{indCen = TRUE}, we set \eqn{Z = 1}.
-Otherwise, \eqn{Z} is generated from a unit-mean gamma distribution 
-See \bold{Details}.}
-
-\item{type}{a character string specifying the underlying model. See \bold{Details}}
+\item{zVar}{a numeric variable specifying the variance of the fraility variable,\eqn{Z}, when \code{zVar} > 0.
+When \code{zVar} = 0, \eqn{Z} is set to a fixed constant 1. The default value is 0.25.}
 
 \item{tau}{a numeric value specifying the maximum observation time.}
-
-\item{zVar}{a numeric variable specifying the variance of \eqn{Z}.
-This is only needed when \eqn{indCen} is TRUE.
-The default value is 0.25.}
 
 \item{summary}{a logical value indicating whether a brief data summary will be printed.}
 }
 \description{
-The function \code{simSC} generates simulated recurrent event data from either
-a Cox-type model, an accelerated mean model, or a scale-change model.
-The censoring time could be either independent (given covariates) or informative.
-The simulated data is used for illustration.
+The function \code{simSC()} generates simulated recurrent event data from either
+a Cox-type model, an accelerated mean model, an accelerated rate model, or a scale-change model.
 }
 \details{
-The function \code{simSC} generates simulated recurrent event data under different
-scenarios based on the following assumptions.
-See \bold{Details} in \code{\link{reReg}} for a more complete model assumptions.
-\describe{
-  \item{\code{type = "cox"}}{generates recurrent event data from a Cox-type model with
-\deqn{\lambda(t) = Z \lambda_0(t) e^{X^\top a}, h(t) = Zh_0(t)e^{X^\top b}.}}
-  \item{\code{type = "am"}}{generates recurrent event data from an accelerated mean model with
-\deqn{\lambda(t) = Z \lambda_0(te^{X^\top a}) e^{X^\top a}, h(t) = Zh_0(te^{X^\top b})e^{X^\top b}.}}
-  \item{\code{type = "sc"}}{generates recurrent event data from a generalized scale-change model with
-\deqn{\lambda(t) = Z \lambda_0(te^{X^\top a}) e^{X^\top b}, h(t) = Zh_0(te^{X^\top a})e^{X^\top b}.}}
-}
-Let \eqn{D} be the informative failure time with the above hazard function.
-An non-informative failure time, \eqn{C}, is generated separately from an
-exponential distribution with mean 80.
-The observed follow-up time is then taken to be \eqn{min(D, C, \tau)}.
-We further assume
+The function \code{simSC()} generates simulated recurrent event data over
+the interval \eqn{(0, \tau)} based on the specification of the recurrent process and
+the terminal events.
+Specifically, the rate function, \eqn{\lambda(t)}, of the recurrent process
+can be specified as one of the following model:
+\deqn{\lambda(t) = Z \lambda_0(te^{X^\top\alpha}) e^{X^\top\beta}, h(t) = Z h_0(te^{X^\top\eta})e^{X^\top\theta}, }
+where \eqn{\lambda_0(t)} is the baseline rate function, \eqn{h_0(t)} is the baseline hazard function,
+\eqn{X} is a \eqn{n} by \eqn{p} covariate matrix and \eqn{\alpha},
+\eqn{Z} is an unobserved shared frailty variable, and
+\eqn{(\alpha, \eta)} and \eqn{(\beta, \theta)} correspond to the shape and size parameters of the
+rate function and the hazard function, respectively.
+
+For all scenarios, two covariates are considered; \eqn{X = (X_1, X_2)}, where
+\eqn{X_1} follows a Bernoulli distribution with probability 0.5 and
+\eqn{X_2} follows a standard normal distribution.
+The censoring time could be either independent (given covariates) or informative.
+The simulated data is used for illustration.
+An informative censoring time, \eqn{C}, is generated separately from an
+exponential distribution with a rate parameter of 1 / 60 if \eqn{X_1} is 1,
+or \eqn{Z^2 / 30} if \eqn{X_1} is 0.
+The observed recurrent events is then observed up to the minimum of \eqn{C},
+terminal event, and \eqn{\tau}.
+Lastly, we assume the baseline functions
 \deqn{\lambda_0(t) = \frac{2}{1 + t}, h_0(t) = \frac{1}{8(1 + t)}.}
-Two covariates are considered; \code{x1} follows a Bernoulli distribution
-with probability 0.5 and \code{x2} follows a standard normal distribution.
 }
 \examples{
 set.seed(123)
-simSC(200, c(-1, 1), c(-1, 1), summary = TRUE)
+simSC(100, c(-1, 1), c(-1, 1), summary = TRUE)
 }
 \seealso{
 \code{\link{reReg}}
