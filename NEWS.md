@@ -1,3 +1,17 @@
+# `reReg` 1.4.0
+  	* `simGSC()` now allows users to specifies design matrix and censoring distribution.
+	* Some name changes (mostly arguments) to match with the JSS submission.
+	* Change names "SC" to "GSC"; this includes the `model` argument and `simSC()` to `simGSC()`.
+	* Added a basebind() function to combine baseline rate/hazard plots.
+	* Temporary disabled sandwich variance estimators for further investigation.
+	* Import `mcf()` from reda.
+	* Event plot can now plot in calendar times.
+	* Updated examples and online vignettes.
+# `reReg` 1.3.1
+  	* simSC() now returns times in t.start and t.stop.
+	* Added origin in simSC()
+	* Updated examples
+	* Import summary.Recur from reda
 # `reReg` 1.3.0
   	* Re-organized `reReg()`; it now provides general model assumptions.
 	* Improved speed via RCpp

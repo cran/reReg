@@ -8,6 +8,9 @@
   x,
   baseline = c("both", "rate", "hazard"),
   smooth = FALSE,
+  newdata = NULL,
+  frailty = NULL,
+  showName = FALSE,
   control = list(),
   ...
 )
@@ -17,12 +20,25 @@
 
 \item{baseline}{a character string specifying which baseline function to plot.
 \describe{
-  \item{\code{baseline = "both"}}{plot both the baseline cumulative rate and the baseline cumulative hazard function (if applicable) in separate panels within the same display (default).}
+  \item{\code{baseline = "both"}}{plot both the baseline cumulative rate and
+the baseline cumulative hazard function (if applicable) in separate panels
+within the same display (default).}
   \item{\code{baseline = "rate"}}{plot the baseline cumulative rate function.}
   \item{\code{baseline = "hazard"}}{plot the baseline cumulative hazard function.}
 }}
 
-\item{smooth}{an optional logical value indicating whether to add a smooth curve obtained from a monotone increasing P-splines implemented in package \code{scam}.}
+\item{smooth}{an optional logical value indicating whether to add a smooth curve
+obtained from a monotone increasing P-splines implemented in package \code{scam}.}
+
+\item{newdata}{an optional data frame contains variables to include in the calculation
+of the cumulative rate function.
+If omitted, the baseline rate function will be plotted.}
+
+\item{frailty}{an optional vector to specify the shared frailty for \code{newdata}.
+If \code{newdata} is given and \code{frailty} is not specified, the}
+
+\item{showName}{an optional logical value indicating whether to label the curves
+when \code{newdata} is specified.}
 
 \item{control}{a list of control parameters. See \bold{Details}.}
 
@@ -36,23 +52,28 @@ Plot the baseline cumulative rate function and the baseline cumulative hazard fu
 (if applicable) for an \code{reReg} object.
 }
 \details{
-The argument \code{control} consists of options with argument defaults to a list with the following values:
+The argument \code{control} consists of options with argument defaults to a list
+with the following values:
 \describe{
   \item{xlab}{customizable x-label, default value is "Time".}
   \item{ylab}{customizable y-label, default value is empty.}
-  \item{main}{customizable title, default value are "Baseline cumulative rate and hazard function" when \code{baseline = "both"},
-"Baseline cumulative rate function" when \code{baseline = "rate"}, and "Baseline cumulative hazard function" when \code{baseline = "hazard"}.}
+  \item{main}{customizable title, default value are "Baseline cumulative rate and
+hazard function" when \code{baseline = "both"},
+"Baseline cumulative rate function" when \code{baseline = "rate"},
+and "Baseline cumulative hazard function" when \code{baseline = "hazard"}.}
 }
 }
 \examples{
 data(simDat)
-fm <- Recur(Time, id, event, status) ~ x1 + x2
+fm <- Recur(t.start \%to\% t.stop, id, event, status) ~ x1 + x2
 
-fit <- reReg(fm, data = simDat, method = "cox", B = 0)
+fit <- reReg(fm, data = simDat, B = 0)
 plot(fit)
-plot(fit, baseline = "rate")
-plot(fit, baseline = "rate", xlab = "Time (days)", smooth = TRUE)
+plot(fit, xlab = "Time (days)", smooth = TRUE)
 
+## Predicted cumulative rate and hazard given covariates
+newdata <- expand.grid(x1 = 0:1, x2 = mean(simDat$x2))
+plot(fit, newdata = newdata, showName = TRUE)
 }
 \seealso{
 \code{\link{reReg}}

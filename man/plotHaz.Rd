@@ -4,12 +4,35 @@
 \alias{plotHaz}
 \title{Plot the Baseline Cumulative Hazard Function for the Terminal Time}
 \usage{
-plotHaz(x, smooth = FALSE, control = list(), ...)
+plotHaz(
+  x,
+  newdata = NULL,
+  frailty = NULL,
+  showName = FALSE,
+  type = c("unrestricted", "bounded", "scaled"),
+  smooth = FALSE,
+  control = list(),
+  ...
+)
 }
 \arguments{
 \item{x}{an object of class \code{reReg}, returned by the \code{reReg} function.}
 
-\item{smooth}{an optional logical value indicating whether to add a smooth curve obtained from a monotone increasing P-splines implemented in package \code{scam}.}
+\item{newdata}{an optional data frame contains variables to include in the calculation
+of the cumulative rate function.
+If omitted, the baseline rate function will be plotted.}
+
+\item{frailty}{an optional vector to specify the shared frailty for \code{newdata}.
+If \code{newdata} is given and \code{frailty} is not specified, the}
+
+\item{showName}{an optional logical value indicating whether to label the curves
+when \code{newdata} is specified.}
+
+\item{type}{a character string specifying the type of rate function to be plotted.
+Options are "unrestricted", "scaled", "bounded". See \bold{Details}.}
+
+\item{smooth}{an optional logical value indicating whether to add a smooth curve
+obtained from a monotone increasing P-splines implemented in package \code{scam}.}
 
 \item{control}{a list of control parameters.}
 
@@ -32,13 +55,12 @@ defaults to a list with the following values:
   \item{main}{customizable title, default value is "Baseline cumulative hazard function".}
 }
 These arguments can also be passed down without specifying a \code{control} list.
-See \bold{Examples}.
 }
 \examples{
 data(simDat)
-fm <- Recur(Time, id, event, status) ~ x1 + x2
+fm <- Recur(t.start \%to\% t.stop, id, event, status) ~ x1 + x2
 
-fit <- reReg(fm, data = simDat, method = "cox", B = 0)
+fit <- reReg(fm, data = simDat, model = "cox|cox", B = 0)
 ## Plot both the baseline cumulative rate and hazard function
 plot(fit)
 ## Plot baseline cumulative hazard function

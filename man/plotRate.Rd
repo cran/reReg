@@ -6,7 +6,10 @@
 \usage{
 plotRate(
   x,
-  type = c("unrestricted", "scaled", "raw"),
+  newdata = NULL,
+  frailty = NULL,
+  showName = FALSE,
+  type = c("unrestricted", "bounded", "scaled"),
   smooth = FALSE,
   control = list(),
   ...
@@ -15,10 +18,21 @@ plotRate(
 \arguments{
 \item{x}{an object of class \code{reReg}, usually returned by the \code{reReg} function.}
 
-\item{type}{a character string specifying the type of rate function to be plotted.
-Options are "unrestricted", "scaled", "raw". See \bold{Details}.}
+\item{newdata}{an optional data frame contains variables to include in the calculation
+of the cumulative rate function.
+If omitted, the baseline rate function will be plotted.}
 
-\item{smooth}{an optional logical value indicating whether to add a smooth curve obtained from a monotone increasing P-splines implemented in package \code{scam}.}
+\item{frailty}{an optional vector to specify the shared frailty for \code{newdata}.
+If \code{newdata} is given and \code{frailty} is not specified, the}
+
+\item{showName}{an optional logical value indicating whether to label the curves
+when \code{newdata} is specified.}
+
+\item{type}{a character string specifying the type of rate function to be plotted.
+Options are "unrestricted", "scaled", "bounded". See \bold{Details}.}
+
+\item{smooth}{an optional logical value indicating whether to add a smooth curve
+obtained from a monotone increasing P-splines implemented in package \code{scam}.}
 
 \item{control}{a list of control parameters.}
 
@@ -29,7 +43,7 @@ These include \code{xlab}, \code{ylab}, \code{main}, and more. See \bold{Details
 A \code{ggplot} object.
 }
 \description{
-Plot the baseline rate function for an \code{reReg} object.
+Plot the baseline cumulative rate function for an \code{reReg} object.
 }
 \details{
 The \code{plotRate()} plots the estimated baseline cumulative rate function 
@@ -38,7 +52,7 @@ When \code{type = "unrestricted"} (default), the baseline cumulative rate functi
 is plotted under the assumption \eqn{E(Z) = 1}.
 When \code{type = "scaled"}, the baseline cumulative rate function is plotted
 under the assumption \eqn{\Lambda(\min(Y^\ast, \tau)) = 1}.
-When \code{type = "raw"}, the baseline cumulative rate function is plotted
+When \code{type = "bounded"}, the baseline cumulative rate function is plotted
 under the assumption \eqn{\Lambda(\tau) = 1}.
 See \code{?reReg} for the specification of the notations and underlying models.
 
@@ -49,13 +63,12 @@ to a list with the following values:
   \item{ylab}{customizable y-label, default value is empty.}
   \item{main}{customizable title, default value is "Baseline cumulative rate function".}
 }
-These arguments can also be passed down without specifying a \code{control} list. See \bold{Examples}.
+These arguments can also be specified outside of the \code{control} list.
 }
 \examples{
 data(simDat)
-fm <- Recur(Time, id, event, status) ~ x1 + x2
-
-fit <- reReg(fm, data = simDat, method = "cox", B = 0)
+fm <- Recur(t.start \%to\% t.stop, id, event, status) ~ x1 + x2
+fit <- reReg(fm, data = simDat, model = "cox|cox", B = 0)
 ## Plot both the baseline cumulative rate and hazard function
 plot(fit)
 ## Plot baseline cumulative rate function
