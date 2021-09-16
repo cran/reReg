@@ -51,6 +51,8 @@ arma::rowvec reLog(const arma::vec& a,
   int p = a.n_elem;
   arma::vec texa = log(T) + X * a;
   arma::vec yexa = log(Y) + X * a;
+  texa.replace(-arma::datum::inf, 0);
+  yexa.replace(-arma::datum::inf, 0);  
   arma::rowvec out(p, arma::fill::zeros);
   arma::mat XW = matvec(X, W);
   for (int i = 0; i < n; i++) {
@@ -96,14 +98,14 @@ arma::rowvec re2(const arma::vec& b,
 
 //' @noRd
 // [[Rcpp::export]]
-arma::vec reGehan(const arma::vec& a,
+arma::rowvec reGehan(const arma::vec& a,
 		  const arma::mat& X,
 		  const arma::vec& T,
 		  const arma::vec& Y,
 		  const arma::vec& W) {
   int n = Y.n_elem;
   int p = a.n_elem;
-  arma::vec out(p, arma::fill::zeros);
+  arma::rowvec out(p, arma::fill::zeros);
   arma::vec texa = log(T) + X * a;
   arma::vec yexa = log(Y) + X * a;
   for (int i = 0; i < n; i++) {
@@ -111,6 +113,36 @@ arma::vec reGehan(const arma::vec& a,
       if ((texa[i] <= yexa[j]) & (texa[i] >= texa[j])) {
         out += W(i) * W(j) * (X.row(i) - X.row(j));
       }
+    }
+  }
+  return out;
+}
+
+
+//' @noRd
+// [[Rcpp::export]]
+arma::rowvec reGehan_s(const arma::vec& a,
+		       const arma::mat& X,
+		       const arma::vec& T,
+		       const arma::vec& Y,
+		       const arma::vec& W,
+		       double nc) {
+  int n = Y.n_elem;
+  int p = a.n_elem;
+  arma::vec texa = log(T) + X * a;
+  arma::vec yexa = log(Y) + X * a;
+  arma::rowvec out(p, arma::fill::zeros);
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+      arma::rowvec xdif = (X.row(i) - X.row(j));
+      arma::vec rij = xdif * xdif.t();
+      rij[0] = sqrt(rij[0] / nc);
+      double H = 0;
+      if (rij[0] != 0) {
+	H = arma::normcdf((yexa[j] - texa[i]) / rij(0)) -
+	  arma::normcdf((texa[j] - texa[i]) / rij(0));
+      }
+      out += W(i) * W(j) * xdif * H; 
     }
   }
   return out;

@@ -6,6 +6,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // reRate
 arma::vec reRate(const arma::vec& T, const arma::vec& Y, const arma::vec& W, const arma::vec& T0);
 RcppExport SEXP _reReg_reRate(SEXP TSEXP, SEXP YSEXP, SEXP WSEXP, SEXP T0SEXP) {
@@ -50,7 +55,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // reGehan
-arma::vec reGehan(const arma::vec& a, const arma::mat& X, const arma::vec& T, const arma::vec& Y, const arma::vec& W);
+arma::rowvec reGehan(const arma::vec& a, const arma::mat& X, const arma::vec& T, const arma::vec& Y, const arma::vec& W);
 RcppExport SEXP _reReg_reGehan(SEXP aSEXP, SEXP XSEXP, SEXP TSEXP, SEXP YSEXP, SEXP WSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -61,6 +66,22 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< const arma::vec& >::type Y(YSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type W(WSEXP);
     rcpp_result_gen = Rcpp::wrap(reGehan(a, X, T, Y, W));
+    return rcpp_result_gen;
+END_RCPP
+}
+// reGehan_s
+arma::rowvec reGehan_s(const arma::vec& a, const arma::mat& X, const arma::vec& T, const arma::vec& Y, const arma::vec& W, double nc);
+RcppExport SEXP _reReg_reGehan_s(SEXP aSEXP, SEXP XSEXP, SEXP TSEXP, SEXP YSEXP, SEXP WSEXP, SEXP ncSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::vec& >::type a(aSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type X(XSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type T(TSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type Y(YSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type W(WSEXP);
+    Rcpp::traits::input_parameter< double >::type nc(ncSEXP);
+    rcpp_result_gen = Rcpp::wrap(reGehan_s(a, X, T, Y, W, nc));
     return rcpp_result_gen;
 END_RCPP
 }

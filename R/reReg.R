@@ -88,10 +88,12 @@ regFit.am.GL.sand <- function(DF, engine, stdErr) {
         J1 <- coef(lm(sqrt(n) * lmfit1 ~ t(Z)))[-1,]
         J2 <- coef(lm(sqrt(n) * lmfit2 ~ t(Z)))[-1,]
     }
-    if (qr(J1)$rank == p) aVar <- solve(J1) %*% V1 %*% t(solve(J1))
+    if (qr(J1)$rank == p) aVar <- AiBAi(J1, V1)
+    ## aVar <- solve(J1) %*% V1 %*% t(solve(J1))
     else aVar <- ginv(J1) %*% V1 %*% t(ginv(J1))
-    if (qr(J2)$rank == p) bVar <- solve(J2) %*% V2 %*% t(solve(J2))
-    else bVar <- ginv(J2) %*% V2 %*% t(ginv(J2))    
+    if (qr(J2)$rank == p) bVar <- AiBAi(J2, V2)
+    ## bVar <- solve(J2) %*% V2 %*% t(solve(J2))
+    else bVar <- ginv(J2) %*% V2 %*% t(ginv(J2)) 
     aSE <- sqrt(diag(aVar))
     bSE <- sqrt(diag(bVar))
     out <- c(res, list(par1.se = aSE, par3.se = bSE, par1.vcov = aVar, par3.vcov = bVar))
@@ -150,8 +152,9 @@ regFit.cox.GL <- function(DF, engine, stdErr) {
 
 ## #' @importFrom rlang is_empty
 regFit.general <- function(DF, engine, stdErr) {
-    if (is.na(match(engine@solver, c("dfsane", "BBsolve", "optim", "BBoptim")))) {
-        print("Warning: Unidentified solver; BB::dfsane is used.")
+    eqList <- c("dfsane", "BBsolve", "optim", "BBoptim", "optimr", "hjk", "mads", "nleqslv")
+    if (is.na(match(engine@solver, eqList))) {
+        warning("Unidentified solver; BB::dfsane is used.")
         engine@solver <- "dfsane"
     }
     out <- s1(engine@typeRec, DF, engine@eqType, engine@solver, engine@par1, engine@par2)
@@ -181,7 +184,7 @@ s2 <- function(type, DF, eqType, solver, par3, par4, zi, wgt = NULL) {
 
 regFit.general.sand <- function(DF, engine, stdErr) {
     if (is.na(match(engine@solver, c("dfsane", "BBsolve", "optim", "BBoptim")))) {
-        print("Warning: Unidentified solver; BB::dfsane is used.")
+        warning("Unidentified solver; BB::dfsane is used.")
         engine@solver <- "dfsane"
     }
     res <- regFit(DF, engine, NULL)
@@ -202,37 +205,82 @@ regFit.general.sand <- function(DF, engine, stdErr) {
     na <- len1 + len2
     nb <- len3 + len4
     L <- apply(Z, 1, function(zz) {
-    c(s1(engine@typeRec, DF, engine@eqType, NULL,
-         res$par1 + zz[1:len1] / sqrt(n), res$par2 + zz[1:len2 + len1] / sqrt(n), res$Lam0)$value,
-      s2(engine@typeTem, DF, engine@eqType, NULL,
-         res$par3 + zz[1:len3 + len1 + len2] / sqrt(n),
-         res$par4 + zz[1:len4 + len1 + len2 + len3] / sqrt(n), res$zi))})
+        c(s1(engine@typeRec, DF, engine@eqType, NULL,
+             res$par1 + zz[1:len1] / sqrt(n), res$par2 + zz[1:len2 + len1] / sqrt(n), res$Lam0)$value,
+          s2(engine@typeTem, DF, engine@eqType, NULL,
+             res$par3 + zz[1:len3 + len1 + len2] / sqrt(n),
+             res$par4 + zz[1:len4 + len1 + len2 + len3] / sqrt(n), res$zi))})
     L <- t(L)
-    J <- solve(t(Z) %*% Z) %*% t(Z) %*% (sqrt(n) * L)
-    recVar <- solve(J[1:na, 1:na]) %*% V[1:na, 1:na] %*% t(solve(J[1:na, 1:na]))
-    par1.vcov <- recVar[1:len1, 1:len1]
+    ## if (engine@typeRec == "gsc") {
+    ##     J <- rbind(cbind(t(Axb(Z[,1:len1], sqrt(n) * L[,1:len1])), matrix(0, len1, len2)),
+    ##                t(Axb(Z, sqrt(n) * L[,1:len2 + len1])))        
+    ## } else
+    J <- t(Axb(Z, sqrt(n) * L))
+    recVar <- AiBAi(J[1:na, 1:na], V[1:na, 1:na])
+    par1.vcov <- recVar[1:len1, 1:len1, drop = FALSE]
     par1.se <- sqrt(diag(par1.vcov))
     res <- c(res, list(par1.vcov = par1.vcov, par1.se = par1.se))
     if (len2 > 0) {
-        par2.vcov <- recVar[1:len2 + len1, 1:len2 + len1]
+        A <- cbind(diag(len1), 0, diag(len2 - 1))
+        par2.vcov <- A %*% recVar %*% t(A)
         par2.se <- sqrt(diag(par2.vcov))
         res <- c(res, list(par2.vcov = par2.vcov, par2.se = par2.se))
+        res$vcovRec12 <- recVar[1:len1, 2:len2 + len1]
     }
     if (nb > 0) {
-        ind2 <- tail(1:nrow(J), nb)
-        J2 <- solve(t(Z[,ind2]) %*% Z[,ind2]) %*% t(Z[,ind2]) %*% (sqrt(n) * L[,ind2])
-        temVar <- solve(J2) %*% V[ind2, ind2] %*% t(solve(J2))
-        par3.vcov <- temVar[1:len3, 1:len3]
-        par3.se <- sqrt(diag(par3.vcov))
-        res <- c(res, list(par3.vcov = par3.vcov, par3.se = par3.se))
-        if (!is.null(res$par4)) {
-            par4.vcov <- temVar[1:len4 + len3, 1:len4 + len3]
-            par4.se <- sqrt(diag(par4.vcov))
-            res <- c(res, list(par4.vcov = par4.vcov, par4.se = par4.se))
+        if (engine@typeTem == "gsc") {
+            bCoef <- matrix(0, B, nb)
+            convergence <- rep(0, B)
+            id <- DF$id
+            uID <- unique(id)
+            mt <- aggregate(event ~ id, data = DF, sum)$event
+            clsz <- mt + 1
+            for (i in 1:B) {
+                sampled.id <- unlist(lapply(split(sort(uID), mt > 0), function(x) {
+                    if (length(x) == 1) return(x)
+                    else return(sample(x, replace = TRUE))
+                }))
+                names(sampled.id) <- NULL
+                ind <- unlist(sapply(sampled.id, function(x) which(id == x)))
+                DF2 <- DF[ind,]
+                DF2$id <- rep(1:n, clsz[sampled.id])
+                tmp <- temSC(DF2, engine@eqType, engine@solver, res$par3, res$par4, res$zi)
+                bCoef[i,] <- c(tmp$par3, tmp$par4)
+            }
+            tmp <- apply(bCoef, 1, crossprod)
+            ps <- c(length(res$par3), length(res$par4))
+            ps <- ps[ps > 0]
+            bound <- c(res$par3, res$par4)
+            convergence <- rowSums(sapply(1:length(ps), function(x) {
+                p <- rev(seq(sum(ps[1:x])))[1:ps[x]]
+                apply(bCoef[,p, drop = FALSE], 1, crossprod) > 10 * drop(crossprod(bound[p]))
+            }))
+            converged <- which(convergence == 0)
+            if (sum(convergence) > 0) {
+                message("Some bootstrap samples failed to converge")
+                rm <- unique(c(which(convergence > 0),
+                               which(tmp %in% boxplot(tmp, plot = FALSE)$out)))
+                converged <- (1:B)[-rm]
+            }
+            temVar <- var(bCoef[converged, ], na.rm = TRUE)
+            res$par3.vcov <- temVar[1:len3, 1:len3, drop = FALSE]
+            res$par3.se <- sqrt(diag(res$par3.vcov))            
+            res$par4.vcov <- temVar[1:len4 + len3, 1:len4 + len3, drop = FALSE]
+            res$par4.se <- sqrt(diag(res$par4.vcov))
+            res$vcovTem12 <- temVar[1:len3, 1:len4 + len3, drop = FALSE]
+        } else { 
+            ind2 <- tail(1:nrow(J), nb)
+            J2 <- Axb(Z[,ind2], sqrt(n) * L[,ind2])
+            temVar <- AiBAi(J2, V[ind2, ind2])
+            res$par3.vcov <- temVar[1:len3, 1:len3, drop = FALSE]
+            res$par3.se <- sqrt(diag(res$par3.vcov))
+            if (!is.null(res$par4)) {
+                res$par4.vcov <- temVar[1:len4 + len3, 1:len4 + len3, drop = FALSE]
+                res$par4.se <- sqrt(diag(res$par4.vcov))
+            }
+            res$vcovTem12 <- temVar[1:len3, 2:len4 + len3, drop = FALSE]
         }
-        res$vcovTem <- temVar
     }
-    res$vcovRec <- recVar
     return(res)
 }
 
@@ -242,6 +290,7 @@ regFit.general.sand <- function(DF, engine, stdErr) {
 regFit.Engine.boot <- function(DF, engine, stdErr) {
     res <- regFit(DF, engine, NULL)
     id <- DF$id
+    uID <- unique(id)
     event <- DF$event
     status <- DF$terminal
     X <- as.matrix(DF[,-c(1:6)])    
@@ -252,67 +301,87 @@ regFit.Engine.boot <- function(DF, engine, stdErr) {
     Y <- rep(DF$time2[event == 0], mt + 1)
     cluster <- unlist(sapply(mt + 1, function(x) 1:x))
     B <- stdErr@B
-    uID <- unique(DF$id) # unique(DF$ID)
     bound <- c(res$par1, res$par2, res$par3, res$par4)
+    engine2 <- engine
+    engine2@par1 <- res$par1
+    if (!is.null(res$par2)) engine2@par2 <- res$par2
     if (stdErr@parallel) {
         cl <- makeCluster(stdErr@parCl)
         clusterExport(cl = cl,
-                      varlist = c("DF", "engine"),
+                      varlist = c("DF", "engine2"),
                       envir = environment())
         out <- parSapply(cl, 1:B, function(x) {
             sampled.id <- sample(unique(id), n, TRUE)
             ind <- unlist(sapply(sampled.id, function(x) which(id == x)))
             DF2 <- DF[ind,]
             DF2$id <- rep(1:n, clsz[sampled.id])
-            tmp <- regFit(DF2, engine, NULL)
+            tmp <- regFit(DF2, engine2, NULL)
             return(c(tmp$par1, tmp$par2, tmp$par3, tmp$par4))
         })
         stopCluster(cl)
         bCoef <- t(out)
-        convergence <- apply(bCoef, 1, function(x) 1 * (x %*% x > 1e3 * bound %*% bound))
     } else {
         bCoef <- matrix(0, B, length(bound))
         convergence <- rep(0, B)
-            for (i in 1:B) {
-            sampled.id <- sample(unique(id), n, TRUE)
+        for (i in 1:B) {
+            ## sampled.id <- sample(unique(id), n, TRUE)
+            sampled.id <- unlist(lapply(split(sort(uID), mt > 0), function(x) {
+                if (length(x) == 1) return(x)
+                else return(sample(x, replace = TRUE))
+            }))
+            names(sampled.id) <- NULL
             ind <- unlist(sapply(sampled.id, function(x) which(id == x)))
             DF2 <- DF[ind,]
             DF2$id <- rep(1:n, clsz[sampled.id])
-            tmp <- regFit(DF2, engine, NULL)
+            tmp <- regFit(DF2, engine2, NULL)
             bCoef[i,] <- c(tmp$par1, tmp$par2, tmp$par3, tmp$par4)
-            convergence[i] <- 1 * (bCoef[i,] %*% bCoef[i,] > 1e3 * bound %*% bound)
         }
     }
+    tmp <- apply(bCoef, 1, crossprod)
+    ps <- c(length(res$par1), length(res$par2), length(res$par3), length(res$par4))
+    ps <- ps[ps > 0]
+    convergence <- rowSums(sapply(1:length(ps), function(x) {
+        p <- rev(seq(sum(ps[1:x])))[1:ps[x]]
+        apply(bCoef[,p,drop = FALSE], 1, crossprod) > 10 * drop(crossprod(bound[p]))
+    }))
     converged <- which(convergence == 0)
-    if (sum(convergence != 0) > 0) {
-        print("Warning: Some bootstrap samples failed to converge")
-        tmp <- apply(bCoef, 1, function(x) x %*% x)
-        converged <- (1:B)[- which(tmp %in% boxplot(tmp, plot = FALSE)$out)]        
+    ## res$bCoef <- bCoef[converged,]
+    if (sum(convergence) > 0) {
+        message("Some bootstrap samples failed to converge")
+        rm <- unique(c(which(convergence > 0),
+                       which(tmp %in% boxplot(tmp, plot = FALSE)$out)))
+        converged <- (1:B)[-rm]
     }
-    if (all(convergence != 0) || sum(convergence == 0) == 1) {
-        print("Warning: some bootstrap samples failed to converge")
-        converged <- 1:B
-    }
+    ## if (all(convergence != 0) || sum(convergence == 0) == 1) {
+    ##     message("Some bootstrap samples failed to converge")
+    ##     converged <- (1:B)[- which(tmp %in% boxplot(tmp, plot = FALSE)$out)]
+    ## }
     bVar <- var(bCoef[converged, ], na.rm = TRUE)
     bSE <- sqrt(diag(as.matrix(bVar)))
     len1 <- length(res$par1)
     len2 <- length(res$par2)
     len3 <- length(res$par3)
     len4 <- length(res$par4)
-    res <- c(res, list(par1.vcov = bVar[1:len1, 1:len1], par1.se = bSE[1:len1], B = length(converged)))
+    res <- c(res, list(par1.vcov = bVar[1:len1, 1:len1, drop = FALSE],
+                       par1.se = bSE[1:len1], B = length(converged)))
     if (len2 > 0)
-        res <- c(res, list(par2.vcov = bVar[1:len2 + len1, 1:len2 + len1],
+        res <- c(res, list(par2.vcov = bVar[1:len2 + len1, 1:len2 + len1, drop = FALSE],
                            par2.se = bSE[1:len2 + len1]))
     if (len3 > 0)
-        res <- c(res, list(par3.vcov = bVar[1:len3 + len1 + len2, 1:len3 + len1 + len2],
+        res <- c(res, list(par3.vcov = bVar[1:len3 + len1 + len2, 1:len3 + len1 + len2, drop = FALSE],
                            par3.se = bSE[1:len3 + len1 + len2]))
     if (len4 > 0)
-        res <- c(res, list(par4.vcov = bVar[1:len4 + len1 + len2 + len3, 1:len4 + len1 + len2 + len3],
+        res <- c(res, list(par4.vcov = bVar[1:len4 + len1 + len2 + len3,
+                                            1:len4 + len1 + len2 + len3, drop = FALSE],
                            par4.se = bSE[1:len4 + len1 + len2 + len3]))
-    if (engine@typeRec == "gsc") {
-        res$par2.vcov <- bVar[1:len1, 1:len1] + bVar[2:len2 + len1, 2:len2 + len1] + 2 * bVar[1:len1, 2:len2 + len1]
-        res$par2.se <- sqrt(diag(res$par2.vcov))
+    if (engine@typeRec == "gsc") {        
+        res$par2.vcov <- var(bCoef[converged, 1:len1, drop = FALSE] +
+                             bCoef[converged, 2:len2 + len1, drop = FALSE])
+        res$par2.se <- sqrt(diag(res$par2.vcov))  
+        res$vcovRec12 <- bVar[1:len1, 2:len2 + len1, drop = FALSE]
     }
+    if (engine@typeTem == "gsc")
+        res$vcovTem12 <- bVar[1:len3 + len1 + len2, 1:len4 + len1 + len2 + len3, drop = FALSE]
     return(res)
 }
 
@@ -424,17 +493,25 @@ setMethod("regFit", signature(engine = "am.GL", stdErr = "sand"),
 #' The \code{control} list consists of the following parameters:
 #' \describe{
 #'   \item{tol}{absolute error tolerance.}
-#'   \item{alpha, beta, eta, theta}{initial guesses used for root search.}
-#'   \item{solver}{the equation solver used for root search. The available options are \code{BB::BBsolve}, \code{BB::dfsane}, \code{BB:BBoptim}, and \code{optim}.}
-#'   \item{eqType}{a character string indicating whether the log-rank type estimating equation or the Gehan-type estimating equation (when available) will be used. }
-#'   \item{boot.parallel}{an logical value indicating whether parallel computation will be applied when \code{se = "boot"} is called.}
-#'   \item{boot.parCl}{an integer value specifying the number of CPU cores to be used when \code{parallel = TRUE}. The default value is half the CPU cores on the current host.}
+#'   \item{init}{a list contains initial guesses used for root search.}
+#'   \item{solver}{the equation solver used for root search.
+#' The available options are \code{BB::BBsolve}, \code{BB::dfsane}, \code{BB::BBoptim}, 
+#' \code{optimx::optimr}, \code{dfoptim::hjk}, \code{dfoptim::mads}, \code{optim},
+#' and \code{nleqslv::nleqslv}.}
+#'   \item{eqType}{a character string indicating whether the log-rank type estimating equation or
+#' the Gehan-type estimating equation (when available) will be used. }
+#'   \item{boot.parallel}{an logical value indicating whether parallel computation
+#' will be applied when \code{se = "boot"} is called.}
+#'   \item{boot.parCl}{an integer value specifying the number of CPU cores to be used when
+#' \code{parallel = TRUE}. The default value is half the CPU cores on the current host.}
 #' }
 #' 
-#' @param formula a formula object, with the response on the left of a "~" operator, and the predictors on the right.
+#' @param formula a formula object, with the response on the left of a "~" operator,
+#' and the predictors on the right.
 #' The response must be a recurrent event survival object as returned by function \code{Recur}.
-#' @param data  an optional data frame in which to interpret the variables occurring in the \code{"formula"}.
-#' @param subset n optional logical vector specifying a subset of observations to be used
+#' @param data  an optional data frame in which to interpret the variables occurring
+#' in the \code{"formula"}.
+#' @param subset an optional logical vector specifying a subset of observations to be used
 #' in the fitting process.
 #' @param B a numeric value specifies the number of bootstraps for variance estimation.
 #' When \code{B = 0}, variance estimation will not be performed.
@@ -444,7 +521,7 @@ setMethod("regFit", signature(engine = "am.GL", stdErr = "sand"),
 #'    \item{\code{boot}}{ nonparametric bootstrap approach}
 #'    \item{\code{sand}}{ resampling-based sandwich estimator}
 #' }
-#' @param control a list of control parameters.
+#' @param control a list of control parameters. See \code{\link{reReg.control}} for default values.
 #'
 #' @export
 #' @references Lin, D., Wei, L., Yang, I. and Ying, Z. (2000). Semiparametric Regression for the Mean and Rate Functions of Recurrent Events.
@@ -461,8 +538,8 @@ setMethod("regFit", signature(engine = "am.GL", stdErr = "sand"),
 #' @references Xu, G., Chiou, S.H.,Yan, J., Marr, K., and Huang, C.-Y. (2019). Generalized Scale-Change Models for Recurrent Event
 #' Processes under Informative Censoring. \emph{Statistica Sinica}, \bold{30}: 1773--1795.
 #'
-#' @importFrom stats approxfun optim model.response
-#' 
+#' @importFrom stats approxfun optim model.response 
+#' @importFrom stats .getXlevels 
 #' @seealso \code{\link{Recur}}, \code{\link{simGSC}}
 #'
 #' @example inst/examples/ex_reReg.R
@@ -493,13 +570,26 @@ reReg <- function(formula, data, subset,
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- quote(stats::model.frame)
     mf <- eval(mf, parent.frame())
-    DF <- do.call(cbind, mf)
+    mm <- stats::model.matrix(formula, data = mf)
+    obj <- stats::model.extract(mf, "response")
+    DF <- cbind(obj, mm)
     DF <- as.data.frame(DF)
-    obj <- model.response(mf)
+    DF <- DF[,colnames(DF) != "(Intercept)"]
     if (!is.Recur(obj)) stop("Response must be a `Recur` object")
     formula[[2]] <- NULL
     if (formula == ~ 1) DF$zero = 0 
     ctrl <- reReg.control()
+    if (!is.null(control$init)) {
+        if(is.null(control$init$alpha)) control$par1 <- 0
+        else control$par1 <- control$init$alpha
+        if(is.null(control$init$beta)) control$par2 <- 0
+        else control$par2 <- control$init$beta
+        if(is.null(control$init$eta)) control$par3 <- 0
+        else control$par3 <- control$init$eta
+        if(is.null(control$init$theta)) control$par4 <- 0
+        else control$par4 <- control$init$theta
+        control$init <- NULL
+    }
     namc <- names(control)
     if (!all(namc %in% names(ctrl))) 
         stop("unknown names in control: ", namc[!(namc %in% names(ctrl))])
@@ -542,7 +632,7 @@ reReg <- function(formula, data, subset,
     if (model == "am.GL") typeRec <- typeTem <- "am.GL"
     if (length(unique(DF$time2[DF$event == 0])) == 1 & typeTem != ".") {
         typeTem <- "."
-        cat("Only one unique censoring time is detected, terminal event model is not fitted.\n\n")
+        message("Only one unique censoring time is detected, terminal event model is not fitted.")
     }
     ## Temporary fix 
     if (typeRec != "gsc")  se <- "boot"
@@ -559,6 +649,11 @@ reReg <- function(formula, data, subset,
     }
     ## initial values
     p <- ncol(DF) - ncol(mf[[1]])
+    if (model %in% c("cox.GL", "am.GL")) {
+        if (length(engine@par1) == 1) engine@par1 <- rep(engine@par1, p)
+        if (length(engine@par1) != p)
+            stop("The length of initial value does not match with the number of covariates.")
+    }
     if (model == "general") {
         if (typeRec == "cox") {
             if (length(engine@par1) == 1) engine@par1 <- rep(engine@par1, p + 1)
@@ -569,6 +664,10 @@ reReg <- function(formula, data, subset,
                 engine@par3 <- engine@par2
                 if (length(engine@par3) == 1) engine@par3 <- rep(engine@par3, p)
                 if (length(engine@par3) != p)
+                    stop("The length of initial value does not match with the number of covariates.")
+                engine@par4 <- engine@par2
+                if (length(engine@par4) == 1) engine@par4 <- rep(engine@par4, p)
+                if (length(engine@par4) != p)
                     stop("The length of initial value does not match with the number of covariates.")
             }
         }
@@ -594,6 +693,9 @@ reReg <- function(formula, data, subset,
                 if (length(engine@par3) == 1) engine@par3 <- rep(engine@par3, p)
                 if (length(engine@par3) != p)
                     stop("The length of initial value does not match with the number of covariates.")
+                if (length(engine@par4) == 1) engine@par4 <- rep(engine@par4, p)
+                if (length(engine@par4) != p)
+                    stop("The length of initial value does not match with the number of covariates.")
             }
         }
     }
@@ -610,10 +712,13 @@ reReg <- function(formula, data, subset,
     fit$call <- Call
     fit$varNames <- names(DF)[-(1:6)]
     fit$se <- se
+    fit$xlevels <- .getXlevels(attr(mf, "terms"), mf)
     if (engine@typeRec == "cox") fit$par1 <- fit$par1[-1]
-    if (engine@typeRec == "gsc" & se != "boot") fit$par2 <- fit$par1 + fit$par2[-1]
-    if (engine@typeRec == "gsc" & se == "boot") fit$par2 <- fit$par2[-1]
-    if (se != "NULL" & se != "boot" & engine@typeRec == "gsc") fit$par2.se <- fit$par2.se[-1]   
+    if (engine@typeRec == "gsc") fit$par2 <- fit$par1 + fit$par2[-1]
+    ## if (se != "NULL" & se != "boot" & engine@typeRec == "gsc") {
+    ##     fit$par2.se <- fit$par2.se[-1]
+    ##     fit$par2.vcov <- fit$par2.vcov[-1, -1, drop = FALSE]
+    ## }
     if (se != "NULL" & engine@typeRec == "cox") fit$par1.se <- fit$par1.se[-1]
     fit <- fit[order(names(fit))]
     class(fit) <- "reReg"
@@ -624,6 +729,8 @@ reReg <- function(formula, data, subset,
 #'
 #' @noRd
 #' @importFrom BB spg
+#' @importFrom optimx optimr
+#' @importFrom dfoptim hjk mads nmk
 #' @importFrom rootSolve uniroot.all
 #' @keywords internal
 eqSolve <- function(par, fn, solver, ...) {
@@ -641,25 +748,59 @@ eqSolve <- function(par, fn, solver, ...) {
     }
     if (solver == "BBsolve")
         out <- BBsolve(par = par, fn = fn, ..., quiet = TRUE)
+    if (solver == "nleqslv") {
+        out <- nleqslv(x = par, fn = fn, ...)
+        out$par <- out$x
+    }
     if (solver == "BBoptim")
         out <- BBoptim(par = par, fn = function(z) sum(fn(z, ...)^2),
                        quiet = TRUE, control = list(trace = FALSE))
     if (solver == "optim")
         out <- optim(par = par, fn = function(z) sum(fn(z, ...)^2),
                      control = list(trace = FALSE))
+    if (solver == "optimr")
+        out <- optimr(par = par, fn = function(z) sum(fn(z, ...)^2))
+    if (solver == "hjk")
+        out <- hjk(par = par, fn = function(z) sum(fn(z, ...)^2))
+    if (solver == "mads")
+        out <- mads(par = par, fn = function(z) sum(fn(z, ...)^2),
+                    control = list(trace = FALSE))
+    if (solver == "nmk")
+        out <- nmk(par = par, fn = function(z) sum(fn(z, ...)^2))    
     return(out)
 }
 
-reReg.control <- function(eqType = c("logrank", "gehan"),
-                          solver = c("BB::dfsane", "BB::BBsolve", "BB::BBoptim", "optim"),
+#' Package options for reReg
+#'
+#' This function provides the fitting options for the \code{reReg()} function. 
+#'
+#' @param eqType a character string indicating whether the log-rank type estimating equation
+#' or the Gehan-type estimating equation (when available) will be used.
+#' @param solver a character string specifying the equation solver to be used for root search.
+#' @param tol a numerical value specifying the absolute error tolerance in root search.
+#' @param init a list contains the initial guesses used for root search.
+#' @param boot.parallel an logical value indicating whether parallel computation will be
+#' applied when \code{se = "boot"} is specified in \code{reReg()}.
+#' @param boot.parCl an integer value specifying the number of CPU cores to be used when
+#' \code{parallel = TRUE}. The default value is half the CPU cores on the current host.
+#'
+#' @seealso \code{\link{reReg}}
+#' @export
+reReg.control <- function(eqType = c("logrank", "gehan", "gehan_s"),
+                          solver = c("BB::dfsane", "BB::BBsolve", "BB::BBoptim", "optimx::optimr",
+                                     "dfoptim::hjk", "dfoptim::mads", "optim", "nleqslv::nleqslv"),
                           tol = 1e-7,
                           init = list(alpha = 0, beta = 0, eta = 0, theta = 0),
                           boot.parallel = FALSE, boot.parCl = NULL) {
     if (is.null(boot.parCl)) boot.parCl <- parallel::detectCores() / 2L
     solver <- match.arg(solver)
+    if (solver == "nleqslv::nleqslv") solve <- "nleqslv"
     if (solver == "BB::dfsane") solver <- "dfsane"
     if (solver == "BB::BBsolve") solver <- "BBsolve"
     if (solver == "BB::BBoptim") solver <- "BBoptim"
+    if (solver == "optimx::optimr") solver <- "optimr"
+    if (solver == "dfoptim::hjk") solver <- "hjk"
+    if (solver == "dfoptim::mads") solver <- "mads"
     eqType <- match.arg(eqType)
     list(tol = tol, eqType = eqType, solver = solver,
          par1 = init$alpha, par2 = init$beta, par3 = init$eta, par4 = init$theta,

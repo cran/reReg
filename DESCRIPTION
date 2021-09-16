@@ -1,6 +1,6 @@
 Package: reReg
 Title: Recurrent Event Regression
-Version: 1.4.0
+Version: 1.4.1
 Authors@R: c(person(given = "Sy Han (Steven)", family = "Chiou",
 	   email = "schiou@utdallas.edu",
 	   role = c("aut", "cre")),
@@ -13,14 +13,14 @@ Encoding: UTF-8
 LazyData: true
 URL: https://github.com/stc04003/reReg
 BugReports: https://github.com/stc04003/reReg/issues
-Imports: BB, nleqslv, SQUAREM, survival, directlabels, ggplot2, MASS,
-        methods, reda (>= 0.5.0), scam, Rcpp, rootSolve
+Imports: BB, nleqslv, dfoptim, optimx, SQUAREM, survival, directlabels,
+        ggplot2, MASS, methods, reda (>= 0.5.0), scam, Rcpp, rootSolve
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.1.1
 NeedsCompilation: yes
-Packaged: 2021-04-14 21:51:37 UTC; schiou
+Packaged: 2021-09-16 18:09:56 UTC; schiou
 Author: Sy Han (Steven) Chiou [aut, cre],
   Chiung-Yu Huang [aut]
 Maintainer: Sy Han (Steven) Chiou <schiou@utdallas.edu>
 Repository: CRAN
-Date/Publication: 2021-04-14 22:10:02 UTC
+Date/Publication: 2021-09-16 18:30:02 UTC
