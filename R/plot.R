@@ -600,11 +600,13 @@ plot.reReg <- function(x,
     ## type <- match.arg(type)
     type <- "unrestricted"
     if (x$typeRec %in% c("cox.GL", "cox.LWYY", "am.GL"))
-        stop("Baseline functions not available for this method.")
-    if (baseline == "both" & x$typeRec == "cox.LWYY")
+        stop("Baseline functions not yet available for this method.")
+    if (x$typeRec %in% c("cox.LWYY", "cox.HH"))
         ctrl <- plotEvents.control(ylab = "Rate")
-    if (baseline %in% c("both", "rate")) ctrl <- plotEvents.control(ylab = "Rate")
-    if (baseline == "hazard") ctrl <- plotEvents.control(ylab = "Hazard")
+    if (baseline %in% c("both", "rate"))
+        ctrl <- plotEvents.control(ylab = "Rate")
+    if (baseline == "hazard")
+        ctrl <- plotEvents.control(ylab = "Hazard")
     namc <- names(control)
     if (!all(namc %in% names(ctrl))) 
         stop("unknown names in control: ", namc[!(namc %in% names(ctrl))])
@@ -766,7 +768,7 @@ plotRate <- function(x, newdata = NULL, frailty = NULL, showName = FALSE,
                 newdata[,i] <- factor(newdata[,i], levels = x$xlevels[[i]])
             newdata <- model.matrix(~., newdata)
         }
-        X <- as.matrix(unique(newdata[,match(x$varNames, colnames(newdata))]))
+        X <- as.matrix(unique(newdata[,match(x$varNames, colnames(newdata)), drop = FALSE]))
         if (ncol(X) != length(x$varNames))
             stop(paste0("Variables ",
                         paste(setdiff(x$varNames, colnames(newdata)), collapse = ", "),
@@ -931,7 +933,7 @@ plotHaz <- function(x, newdata = NULL, frailty = NULL, showName = FALSE,
         }
     }
     if (!is.null(newdata)) { 
-        X <- as.matrix(unique(newdata[,match(x$varNames, names(newdata))]))
+        X <- as.matrix(unique(newdata[,match(x$varNames, names(newdata)), drop = FALSE]))
         if (ncol(X) != length(x$varNames))
             stop(paste0("Variables ",
                         paste(setdiff(x$varNames, names(newdata)), collapse = ", "),
@@ -1049,17 +1051,22 @@ plotEvents.control <- function(xlab = NULL, ylab = NULL,
 #' @param ... \code{ggplot} objects created by plotting \code{reReg} objects.
 #' @param legend.title an optional character string to specify the legend title.
 #' @param legend.labels an optional character string to specify the legend labels.
+#' @param control a list of control parameters. 
 #' 
 #' @export
 #' @keywords Plots
 #' 
 #' @example inst/examples/ex_basebind.R
-basebind <- function(..., legend.title, legend.labels) {
+basebind <- function(..., legend.title, legend.labels, control = list()) {
     gglst <- list(...)
     if (any(sapply(gglst, function(x) attr(x, "from")) != "reReg"))
         stop("Plots must be created from reReg objects")
     if (missing(legend.title)) legend.title <- ""
     ctrl <- plotEvents.control()
+    namc <- names(control)
+    if (!all(namc %in% names(ctrl))) 
+        stop("unknown names in control: ", namc[!(namc %in% names(ctrl))])
+    ctrl[namc] <- control
     if (is.null(ctrl$ylab)) ctrl$ylab <- ""
     nargs <- length(gglst)
     if (missing(legend.labels)) legend.labels <- 1:nargs

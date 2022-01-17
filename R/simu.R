@@ -60,7 +60,8 @@ inv <- function (t, z, exa, exb, fun) {
 #' from the model:
 #' \deqn{\lambda(t) = \displaystyle \frac{2Z}{1 + te^{-X_{i1} - X_{i2}}},
 #' h(t) = \displaystyle \frac{Z}{5(1 + te^{X_{i1} + X_{i2}})},  t\in[0, 60].}
-#'
+#' See \href{https://www.sychiou.com/reReg/articles/reReg-sims.html}{online vignette}
+#' for more examples.
 #' 
 #' @param n number of observation.
 #' @param para a list of numerical vectors for the regression coefficients
@@ -141,9 +142,9 @@ simGSC <- function(n, summary = FALSE, para,
         D <- invHaz(rexp(1), z, c(exp(x %*% eta)), c(exp(x %*% theta)))
         y <- min(cen, tau, D)
         status <- 1 * (y == D)
-        m <- -1
         tij <- NULL
         up <- Lam(y, z, c(exp(x %*% alpha)), c(exp(x %*% beta)))
+        m <- -1
         while(sum(tij) < up) {
             tij <- c(tij, rexp(1))
             m <- m + 1

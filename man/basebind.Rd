@@ -4,7 +4,7 @@
 \alias{basebind}
 \title{Function used to combine baseline functions in one plot}
 \usage{
-basebind(..., legend.title, legend.labels)
+basebind(..., legend.title, legend.labels, control = list())
 }
 \arguments{
 \item{...}{\code{ggplot} objects created by plotting \code{reReg} objects.}
@@ -12,6 +12,8 @@ basebind(..., legend.title, legend.labels)
 \item{legend.title}{an optional character string to specify the legend title.}
 
 \item{legend.labels}{an optional character string to specify the legend labels.}
+
+\item{control}{a list of control parameters.}
 }
 \description{
 Combine different plots into one.
