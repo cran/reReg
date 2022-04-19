@@ -12,11 +12,13 @@
 #' sandwich estimator
 #' @param par1 is \alpha from Xu et al. (2019)
 #' @param par2 is \theta from Xu et al. (2019)
-#' @param trace trace or no? 
+#' @param trace trace or no?
+#' @param numAdj constant for heuristic adjustment
+#' 
 #' @importFrom utils tail
 #' @noRd
 reSC <- function(DF, eqType, solver, par1, par2,
-                 Lam0 = NULL, w1 = NULL, w2 = NULL, trace = FALSE) {
+                 Lam0 = NULL, w1 = NULL, w2 = NULL, trace = FALSE, numAdj = 1e-3) {
     df0 <- DF[DF$event == 0,]
     df1 <- DF[DF$event > 0,]
     rownames(df0) <- rownames(df1) <- NULL
@@ -66,14 +68,14 @@ reSC <- function(DF, eqType, solver, par1, par2,
         } else {
             Lam <- Lam0(exp(yexa2))
         }
-        ## R <- w2 * (m + 0.01) / (Lam + 0.01)
-        R <- (m + 0.01) / (Lam + 0.01)
-        zi <- R / exp(Xi[,-1, drop = FALSE] %*% par2[-1])
+        R <- m / Lam
+        R2 <- (m + numAdj) / (Lam + numAdj)
+        zi <- R2 / exp(Xi[,-1, drop = FALSE] %*% par2[-1])
         ## return(list(value = c(U1(par1), re2(par2, R, Xi, rep(1, length(m)))), zi = zi))
         return(list(value = c(U1(par1), re2(par2, R, Xi, w1)), zi = zi))
     } else {
         ## non-smooth version could be unstable when there are only a few binary covaraites
-        ## a grid search to help in root search in this scenario
+        ## a grid search can help in root search in this scenario
         ## if (sum(sapply(1:ncol(Xi), function(d) length(unique(Xi[,d])))) < 6) {
         ##     dtry <- expand.grid(lapply(par1, function(e) seq(e - 5, e + 5, length.out = 100)))
         ##     ## dtry <- expand.grid(rep(list(seq(-5, 5, length.out = 100)), length(par1)))
@@ -87,9 +89,8 @@ reSC <- function(DF, eqType, solver, par1, par2,
         yexa2 <- c(log(yi) + as.matrix(df0[,-(1:6)]) %*% ahat)
         rate <- c(reRate(texa, yexa, rep(w1, m), yexa2))
         Lam <- exp(-rate)
-        R <- (m + 0.01) / (Lam + 0.01)
-        ## R <- m / Lam
-        ## R <- ifelse(R > 1e5, (m + .01) / (Lam + .01), R)
+        R <- m / Lam
+        R2 <- (m + numAdj) / (Lam + numAdj)
         fit.b <- eqSolve(par2, U2, solver, trace)
         ind <- !duplicated(yexa2)
         return(list(par1 = fit.a$par,
@@ -99,7 +100,7 @@ reSC <- function(DF, eqType, solver, par1, par2,
                     ## alpha = c(fit.a$par, fit.b$par[-1] + fit.a$par),
                     ## aconv = c(fit.a$convergence, fit.b$convergence),
                     log.muZ = fit.b$par[1],
-                    zi = R / exp(Xi[,-1, drop = FALSE] %*% fit.b$par[-1]),
+                    zi = R2 / exp(Xi[,-1, drop = FALSE] %*% fit.b$par[-1]),
                     Lam0 = function(x)
                         approx(x = yexa2[ind], y = Lam[ind], xout = log(x),
                                yleft = min(Lam), yright = max(Lam))$y))
@@ -108,7 +109,7 @@ reSC <- function(DF, eqType, solver, par1, par2,
     }
 }
 
-reAR <- function(DF, eqType, solver, par1, Lam0 = NULL, w1 = NULL, trace = FALSE) {
+reAR <- function(DF, eqType, solver, par1, Lam0 = NULL, w1 = NULL, trace = FALSE, numAdj = 1e-3) {
     df0 <- DF[DF$event == 0,]
     df1 <- DF[DF$event > 0,]
     rownames(df0) <- rownames(df1) <- NULL
@@ -144,8 +145,9 @@ reAR <- function(DF, eqType, solver, par1, Lam0 = NULL, w1 = NULL, trace = FALSE
         } else {
             Lam <- Lam0(exp(yexa2))
         }
-        R <- (m + 0.01) / (Lam + 0.01)
-        zi <- R * exp(as.matrix(df0[,-(1:6)]) %*% par1)
+        R <- m / Lam
+        R2 <- (m + numAdj) / (Lam + numAdj)
+        zi <- R2 * exp(as.matrix(df0[,-(1:6)]) %*% par1)
         return(list(value = U1(par1) / length(m), zi = zi))
     } else {
         fit.a <- eqSolve(par1, U1, solver, trace)
@@ -155,10 +157,9 @@ reAR <- function(DF, eqType, solver, par1, Lam0 = NULL, w1 = NULL, trace = FALSE
         yexa2 <- c(log(yi) + as.matrix(df0[,-(1:6)]) %*% ahat)
         rate <- c(reRate(texa, yexa, rep(w1, m), yexa2))
         Lam <- exp(-rate)
-        R <- (m + 0.01) / (Lam + 0.01)
-        ## R <- m / Lam
-        ## R <- ifelse(R > 1e5, (m + .01) / (Lam + .01), R)
-        zi <- R * exp(as.matrix(df0[,-(1:6)]) %*% fit.a$par)
+        R <- m / Lam
+        R2 <- (m + numAdj) / (Lam + numAdj)
+        zi <- R2 * exp(as.matrix(df0[,-(1:6)]) %*% fit.a$par)
         ind <- !duplicated(yexa2)
         return(list(par1 = fit.a$par,
                     par1.conv = fit.a$convergence,
@@ -177,7 +178,7 @@ reAR <- function(DF, eqType, solver, par1, Lam0 = NULL, w1 = NULL, trace = FALSE
 #' @param Lam0 is the estiamted cumulative baseline rate function; if NULL calculate here
 #' 
 #' @noRd
-reCox <- function(DF, eqType, solver, par1, Lam0 = NULL, w1 = NULL, trace = FALSE) {
+reCox <- function(DF, eqType, solver, par1, Lam0 = NULL, w1 = NULL, trace = FALSE, numAdj = 1e-3) {
     df0 <- DF[DF$event == 0,]
     df1 <- DF[DF$event > 0,]
     rownames(df0) <- rownames(df1) <- NULL
@@ -202,24 +203,24 @@ reCox <- function(DF, eqType, solver, par1, Lam0 = NULL, w1 = NULL, trace = FALS
     } else {
         Lam <- Lam0(yi)
     }
-    ## R <- (m + 0.01) / (Lam + 0.01)
     R <- m / Lam
+    R2 <- (m + numAdj) / (Lam + numAdj) ## Used in borrow strength
     Xi <- as.matrix(cbind(1, df0[,-(1:6)]))
     U1 <- function(b) as.numeric(re2(b, R, Xi, w1))
     if (is.null(solver)) { 
         return(list(value = U1(par1),
-                    zi = R / exp(Xi[,-1, drop = FALSE] %*% par1[-1])))
+                    zi = R2 / exp(Xi[,-1, drop = FALSE] %*% par1[-1])))
     } else {
         fit.a <- eqSolve(par1, U1, solver, trace)
         return(list(par1 = fit.a$par, ## alpha = fit.a$par[-1],
                     par1.conv = fit.a$convergence,
                     log.muZ = fit.a$par[1],
-                    zi = R / exp(Xi[,-1, drop = FALSE] %*% fit.a$par[-1]),
+                    zi = R2 / exp(Xi[,-1, drop = FALSE] %*% fit.a$par[-1]),
                     Lam0 = approxfun(t0, Lam0, yleft = min(Lam0), yright = max(Lam0))))
     }
 }
 
-reAM <- function(DF, eqType, solver, par1, Lam0 = NULL, w1 = NULL, trace = FALSE) {
+reAM <- function(DF, eqType, solver, par1, Lam0 = NULL, w1 = NULL, trace = FALSE, numAdj = 1e-3) {
     df0 <- DF[DF$event == 0,]
     df1 <- DF[DF$event > 0,]
     rownames(df0) <- rownames(df1) <- NULL
@@ -251,8 +252,9 @@ reAM <- function(DF, eqType, solver, par1, Lam0 = NULL, w1 = NULL, trace = FALSE
         } else {
             Lam <- Lam0(exp(yexa))
         }
-        R <- (m + 0.01) / (Lam + 0.01)
-        return(list(value = as.numeric(U1(par1)), zi = R))
+        R <- m / Lam
+        R2 <- (m + numAdj) / (Lam + numAdj)
+        return(list(value = as.numeric(U1(par1)), zi = R2))
     } else {
         fit.a <- eqSolve(par1, U1, solver, trace)
         ahat <- fit.a$par
@@ -260,10 +262,11 @@ reAM <- function(DF, eqType, solver, par1, Lam0 = NULL, w1 = NULL, trace = FALSE
         yexa <- log(yi) + xi %*% ahat
         rate <- c(reRate(texa, rep(yexa, m), rep(w1, m), yexa))
         Lam <- exp(-rate)
-        R <- (m + 0.01) / (Lam + 0.01)
+        R <- m / Lam
+        R2 <- (m + numAdj) / (Lam + numAdj)
         return(list(par1 = fit.a$par,
                     par1.conv = fit.a$convergence,
-                    log.muZ = log(mean(R)), zi = R,
+                    log.muZ = log(mean(R2)), zi = R2,
                     Lam0 = function(x)
                         approx(x = yexa[!duplicated(yexa)], y = Lam[!duplicated(yexa)],
                                xout = log(x), yleft = min(Lam), yright = max(Lam))$y))

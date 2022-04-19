@@ -110,7 +110,7 @@ arma::rowvec reGehan(const arma::vec& a,
   arma::vec yexa = log(Y) + X * a;
   for (int i = 0; i < n; i++) {
     for (int j = 0; j < n; j++) {
-      if ((texa[i] <= yexa[j]) & (texa[i] >= texa[j])) {
+      if ((texa[i] <= yexa[j]) && (texa[i] >= texa[j])) {
         out += W(i) * W(j) * (X.row(i) - X.row(j));
       }
     }
