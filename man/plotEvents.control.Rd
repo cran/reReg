@@ -14,6 +14,16 @@ plotEvents.control(
   legend.position = "top",
   base_size = 12,
   cex = NULL,
+  width = NULL,
+  bar.color = NULL,
+  recurrent.color = NULL,
+  recurrent.shape = NULL,
+  recurrent.stroke = NULL,
+  terminal.color = NULL,
+  terminal.shape = NULL,
+  terminal.stroke = NULL,
+  not.terminal.color = NULL,
+  not.terminal.shape = NULL,
   alpha = 0.7
 )
 }
@@ -47,6 +57,38 @@ This argument is passed to the \code{ggplot} theme environment.
 The default value is 12.}
 
 \item{cex}{a numerical value specifies the size of the points.}
+
+\item{width}{a numerical value specifies the width of the event plot.
+By \code{ggplot} default, set to 90\% of the resolution of the data.}
+
+\item{bar.color}{a numerical value or a character string specifies
+color for lines. Default to gray.}
+
+\item{recurrent.color}{a numerical value or a character string
+specifies color for recurrent events. Default to green.}
+
+\item{recurrent.shape}{a numerical value or a character string
+specifies shape for recurrent events. Default to circle.}
+
+\item{recurrent.stroke}{a numerical value or a character string
+specifies stroke for recurrent events. Default to circle.}
+
+\item{terminal.color}{a numerical value or a character string
+specifies color for terminal events. Default to red.}
+
+\item{terminal.shape}{a numerical value or a character string
+specifies shape for terminal events. Default to triangle.}
+
+\item{terminal.stroke}{a numerical value or a character string
+specifies stroke for terminal events. Default to triangle.}
+
+\item{not.terminal.color}{a numerical value or a character string
+specifies color for non-terminal events.
+Non-terminal events are not plotted at default.}
+
+\item{not.terminal.shape}{a numerical value or a character string
+specifies shape for terminal events.
+Non-terminal events are not plotted at default.}
 
 \item{alpha}{a numerical value specifies the transparency of the points.}
 }

@@ -1,6 +1,6 @@
 Package: reReg
 Title: Recurrent Event Regression
-Version: 1.4.3
+Version: 1.4.4
 Authors@R: c(person(given = "Sy Han (Steven)", family = "Chiou",
 	   email = "schiou@utdallas.edu",
 	   role = c("aut", "cre")),
@@ -18,9 +18,9 @@ Imports: BB, nleqslv, dfoptim, optimx, SQUAREM, survival, directlabels,
 LinkingTo: Rcpp, RcppArmadillo
 RoxygenNote: 7.1.2
 NeedsCompilation: yes
-Packaged: 2022-04-18 18:13:52 UTC; schiou
+Packaged: 2022-06-15 04:13:50 UTC; schiou
 Author: Sy Han (Steven) Chiou [aut, cre],
   Chiung-Yu Huang [aut]
 Maintainer: Sy Han (Steven) Chiou <schiou@utdallas.edu>
 Repository: CRAN
-Date/Publication: 2022-04-19 09:50:03 UTC
+Date/Publication: 2022-06-15 15:20:02 UTC
