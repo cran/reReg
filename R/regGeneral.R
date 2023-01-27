@@ -65,7 +65,10 @@ reSC <- function(DF, eqType, solver, par1, par2,
       Lam <- Lam0(exp(yexa2))
     }
     R <- m / Lam
-    if (numAdj > min(Lam)) numAdj <- numAdj * min(Lam)
+    if (numAdj > min(Lam)) {
+      ## warning("A smaller numAdj is recommended.")
+      numAdj <- numAdj * min(Lam)
+    }
     R2 <- (m + numAdj) / (Lam + numAdj)
     zi <- R2 / exp(Xi[,-1, drop = FALSE] %*% par2[-1])
     ## return(list(value = c(U1(par1), re2(par2, R, Xi, rep(1, length(m)))), zi = zi))
@@ -87,7 +90,10 @@ reSC <- function(DF, eqType, solver, par1, par2,
     rate <- c(reRate(texa, yexa, rep(w1, m), yexa2))
     Lam <- exp(-rate)
     R <- m / Lam
-    if (numAdj > min(Lam)) numAdj <- numAdj * min(Lam)
+    if (numAdj > min(Lam)) {
+      ## warning("A smaller numAdj is recommended.")
+      numAdj <- numAdj * min(Lam)
+    }
     R2 <- (m + numAdj) / (Lam + numAdj)
     fit.b <- eqSolve(par2, U2, solver, trace)
     ind <- !duplicated(yexa2)
@@ -144,7 +150,10 @@ reAR <- function(DF, eqType, solver, par1, Lam0 = NULL, w1 = NULL, trace = FALSE
       Lam <- Lam0(exp(yexa2))
     }
     R <- m / Lam
-    if (numAdj > min(Lam)) numAdj <- numAdj * min(Lam)
+    if (numAdj > min(Lam)) {
+      ## warning("A smaller numAdj is recommended.")
+      numAdj <- numAdj * min(Lam)
+    }
     R2 <- (m + numAdj) / (Lam + numAdj)
     zi <- R2 * exp(as.matrix(df0[,-(1:6)]) %*% par1)
     return(list(value = U1(par1) / length(m), zi = zi))
@@ -157,7 +166,10 @@ reAR <- function(DF, eqType, solver, par1, Lam0 = NULL, w1 = NULL, trace = FALSE
     rate <- c(reRate(texa, yexa, rep(w1, m), yexa2))
     Lam <- exp(-rate)
     R <- m / Lam
-    if (numAdj > min(Lam)) numAdj <- numAdj * min(Lam)
+    if (numAdj > min(Lam)) {
+      ## warning("A smaller numAdj is recommended.")
+      numAdj <- numAdj * min(Lam)
+    }
     R2 <- (m + numAdj) / (Lam + numAdj)
     zi <- R2 * exp(as.matrix(df0[,-(1:6)]) %*% fit.a$par)
     ind <- !duplicated(yexa2)
@@ -204,7 +216,10 @@ reCox <- function(DF, eqType, solver, par1, Lam0 = NULL, w1 = NULL, trace = FALS
     Lam <- Lam0(yi)
   }
   R <- m / Lam
-  if (numAdj > min(Lam)) numAdj <- numAdj * min(Lam)
+  if (numAdj > min(Lam)) {
+    ## warning("A smaller numAdj is recommended.")
+    numAdj <- numAdj * min(Lam)
+  }
   R2 <- (m + numAdj) / (Lam + numAdj) ## Used in borrow strength
   Xi <- as.matrix(cbind(1, df0[,-(1:6)]))
   U1 <- function(b) as.numeric(re2(b, R, Xi, w1))
@@ -254,7 +269,10 @@ reAM <- function(DF, eqType, solver, par1, Lam0 = NULL, w1 = NULL, trace = FALSE
       Lam <- Lam0(exp(yexa))
     }
     R <- m / Lam
-    if (numAdj > min(Lam)) numAdj <- numAdj * min(Lam)
+    if (numAdj > min(Lam)) {
+      ## warning("A smaller numAdj is recommended.")
+      numAdj <- numAdj * min(Lam)
+    }
     R2 <- (m + numAdj) / (Lam + numAdj)
     return(list(value = as.numeric(U1(par1)), zi = R2))
   } else {
@@ -265,7 +283,10 @@ reAM <- function(DF, eqType, solver, par1, Lam0 = NULL, w1 = NULL, trace = FALSE
     rate <- c(reRate(texa, rep(yexa, m), rep(w1, m), yexa))
     Lam <- exp(-rate)
     R <- m / Lam
-    if (numAdj > min(Lam)) numAdj <- numAdj * min(Lam)
+    if (numAdj > min(Lam)) {
+      ## warning("A smaller numAdj is recommended.")
+      numAdj <- numAdj * min(Lam)
+    }
     R2 <- (m + numAdj) / (Lam + numAdj)
     return(list(par1 = fit.a$par,
                 par1.conv = fit.a$convergence,
@@ -358,7 +379,7 @@ temAM <- function(DF, eqType, solver, par3, zi, wgt = NULL, trace = FALSE) {
   if (eqType == "logrank")
     U1 <- function(x) as.numeric(temLog(x, x, xi, yi, zi, di, wi))
   if (eqType == "gehan") 
-    U1 <- function(x) as.numeric(temGehan(x, x, xi, yi, zi, di, wi))
+    U1 <- function(x) as.numeric(temGehan(x, x, t(xi), yi, zi, di, wi))
   if (is.null(solver)) return(U1(par3))
   else {
     fit.a <- eqSolve(par3, U1, solver, trace)
@@ -397,7 +418,7 @@ temCox <- function(DF, eqType, solver, par3, zi, wgt = NULL, trace = FALSE) {
   if (eqType == "logrank")
     U1 <- function(x) as.numeric(temLog(rep(0, p), x, xi, yi, zi, di, wi))
   if (eqType == "gehan") 
-    U1 <- function(x) as.numeric(temGehan(rep(0, p), x, xi, yi, zi, di, wi))
+    U1 <- function(x) as.numeric(temGehan(rep(0, p), x, t(xi), yi, zi, di, wi))
   if (is.null(solver)) return(U1(par3))
   else {
     fit.a <- eqSolve(par3, U1, solver, trace)
@@ -434,7 +455,7 @@ temAR <- function(DF, eqType, solver, par3, zi, wgt = NULL, trace = FALSE) {
   if (eqType == "logrank")
     U1 <- function(x) as.numeric(temLog(x, rep(0, p), xi, yi, zi, di, wi))
   if (eqType == "gehan") 
-    U1 <- function(x) as.numeric(temGehan(x, rep(0, p), xi, yi, zi, di, wi))
+    U1 <- function(x) as.numeric(temGehan(x, rep(0, p), t(xi), yi, zi, di, wi))
   if (is.null(solver)) return(U1(par3))
   else {
     fit.a <- eqSolve(par3, U1, solver, trace)

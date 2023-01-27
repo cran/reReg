@@ -661,6 +661,8 @@ setMethod("regFit", signature(engine = "am.GL", stdErr = "sand"),
 #' @param control a list of control parameters. See \code{\link{reReg.control}} for default values.
 #'
 #' @export
+#' @references Chiou, S.H., Xu, G., Yan, J. and Huang, C.-Y. (2023). Regression Modeling for Recurrent Events Possibly with an Informative Terminal Event Using {R} Package {reReg}.
+#' \emph{Journal of Statistical Software}, \bold{105}(5): 1--34. 
 #' @references Lin, D., Wei, L., Yang, I. and Ying, Z. (2000). Semiparametric Regression for the Mean and Rate Functions of Recurrent Events.
 #' \emph{Journal of the Royal Statistical Society: Series B (Methodological)}, \bold{62}: 711--730.
 #' @references Wang, M.-C., Qin, J., and Chiang, C.-T. (2001). Analyzing Recurrent Event Data with Informative Censoring.
@@ -672,7 +674,7 @@ setMethod("regFit", signature(engine = "am.GL", stdErr = "sand"),
 #' \emph{Journal of the American Statistical Association}, \bold{99}(468): 1153--1165.
 #' @references Xu, G., Chiou, S.H., Huang, C.-Y., Wang, M.-C. and Yan, J. (2017). Joint Scale-change Models for Recurrent Events and Failure Time.
 #' \emph{Journal of the American Statistical Association}, \bold{112}(518): 796--805.
-#' @references Xu, G., Chiou, S.H.,Yan, J., Marr, K., and Huang, C.-Y. (2019). Generalized Scale-Change Models for Recurrent Event
+#' @references Xu, G., Chiou, S.H., Yan, J., Marr, K., and Huang, C.-Y. (2019). Generalized Scale-Change Models for Recurrent Event
 #' Processes under Informative Censoring. \emph{Statistica Sinica}, \bold{30}: 1773--1795.
 #' @references Huang, M.-Y. and Huang, C.-Y. (2022). Improved semiparametric estimation of the proportional rate model with recurrent event data.
 #' \emph{In revision}.
@@ -942,7 +944,7 @@ eqSolve <- function(par, fn, solver, trace, ...) {
 #' the generalized method of moments (\code{cppl = "GMM"}) or empirical likelihood estimation (\code{cppl = "EL"}).
 #' This option is only used when \code{model = "cox.HH"}.
 #' @param cppl.wfun a list of (up to two) weight functions to be combined with the weighted pseudo-partial likelihood scores.
-#' Avaialble options are \code{"Gehan"} and \code{"cumbase"},
+#' Available options are \code{"Gehan"} and \code{"cumbase"},
 #' which correspond to the Gehan's weight and the cumulative baseline hazard function, respectively.
 #' Alternatively, the weight functions can be specified with function formulas.
 #' This option is only used when \code{model = "cox.HH"}.
@@ -959,7 +961,7 @@ reReg.control <- function(eqType = c("logrank", "gehan", "gehan_s"),
                           tol = 1e-7, cppl = NULL, cppl.wfun = list(NULL, NULL),
                           init = list(alpha = 0, beta = 0, eta = 0, theta = 0),
                           boot.parallel = FALSE, boot.parCl = NULL,
-                          maxit1 = 100, maxit2 = 10, trace = FALSE, numAdj = 1e-3) {
+                          maxit1 = 100, maxit2 = 10, trace = FALSE, numAdj = 1e-7) {
   if (is.null(boot.parCl)) boot.parCl <- parallel::detectCores() / 2L
   solver <- match.arg(solver)
   if (solver == "nleqslv::nleqslv") solve <- "nleqslv"
