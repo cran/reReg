@@ -1,14 +1,14 @@
-b5346c0271c82f0073c09381c4aa011f *DESCRIPTION
+1764c1127480a24ef34a0552a92f2d6b *DESCRIPTION
 32f54fa3e2cd6db1576c8203337137e4 *NAMESPACE
-0137de46d4336d595eb16dd37f7353ee *NEWS.md
+a95ec5d0099603ace9a2ef84607657b5 *NEWS.md
 6a893bce74f8f58b2c9a1898c615071b *R/RcppExports.R
 8483621df215bac85374a7109628120e *R/Recur.R
 950dd70ff23e2086f76f2ba622bbdb5b *R/cppl.R
 6b30d510cbd8c8c1cd658af6e7675fbb *R/data.R
 fdc6c4199eabadf5caf83799468251e5 *R/mcf.R
 2aacc2a91bce23e2631e2e2e73b870cb *R/npFit.R
-404315cdf286d7721c5723f651e0ba87 *R/plot.R
-11772374e1450a52313b00b678b9170c *R/reReg.R
+72728431f039201b164cec9d72cd9453 *R/plot.R
+2c55de67369042e2f6fd02e2cfe0c57e *R/reReg.R
 9a1f102cd24c82840e9dd695b1795231 *R/reReg_pkg.R
 e6677d567e00fd70df93ca5c5d5b2f8f *R/reSurv.R
 4609ed2e155a81dcda60e85569341fb1 *R/regGeneral.R
@@ -25,7 +25,7 @@ ef3a070907b7f1b6fbf35e1f0f2d3e26 *man/plotEvents.Rd
 5d7fa0a06f49afc50040a229d4b8fe7d *man/plotEvents.control.Rd
 b2e8182e88839a0ed99934e2eab49479 *man/plotHaz.Rd
 f166b165e38265b1f3d3ad5d7f637c85 *man/plotRate.Rd
-330f1b5977b434f636acbbc9982c9026 *man/reReg-package.Rd
+5b905f6a936bdc9ac146154b3c66672d *man/reReg-package.Rd
 4ae9c8c028c6bdf0b9f3961ac46f3845 *man/reReg.Rd
 d724033bb9473e0c3f2ab4a499753429 *man/reReg.control.Rd
 e98769c22844607772f0670e0c2e793d *man/reSurv.Rd
@@ -34,7 +34,7 @@ a55c4c0bfa7d7e639e8f5a2da86744af *man/residuals.reReg.Rd
 8992d1a71dcc235d9b93a0ebca095564 *man/simDat.Rd
 2bea62899613927934c23533e406c1cb *man/simGSC.Rd
 c551744f77a183a51990bf65f3399322 *src/Ghosh.c
-e2ca84a4d0f27482d471191ce5778746 *src/Makevars
+7c9cfc26440712e76b143565ca4f42b7 *src/Makevars
 a8486cad95c28e0764cd05367f54fec1 *src/RcppExports.cpp
 b3106e6af718a9cc74169dc1d08a07b2 *src/init.c
 e5457552e3f9fb9eda4a2c0eda7f7088 *src/regRec.cpp

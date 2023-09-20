@@ -1,6 +1,10 @@
+# `reReg` 1.4.6
+	* Changed maintainer email
+	* Changed last.bumpup to right.polygons in geom_dl() when showName is specified
+	* Scale extreme covariates for enhanced stability
 # `reReg` 1.4.5
   	* Now requires R 4.2.0
-	* Add JSS citation/acknowledgement
+	* Added JSS citation/acknowledgement
 	* Improved legend location
 	* Removed rounding in summary table
 # `reReg` 1.4.4
