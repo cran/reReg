@@ -102,7 +102,7 @@ regFit.am.GL.sand <- function(DF, engine, stdErr) {
   return(out)
 }
 
-#' @importFrom survival cluster
+#' @importFrom survival cluster basehaz
 #' @importFrom stats vcov
 regFit.cox.LWYY <- function(DF, engine, stdErr) {
   id <- DF$id
@@ -116,6 +116,8 @@ regFit.cox.LWYY <- function(DF, engine, stdErr) {
   out$typeRec <- engine@typeRec
   out$typeTem <- engine@typeTem
   out$log.muZ <- 0
+  Lam0 <- basehaz(fit.coxph, centered = FALSE)
+  out$Lam0 <- function(x) approx(x = Lam0$time, y = Lam0$hazard, xout = x, yleft = 0)$y 
   return(out)
 }
 
@@ -132,7 +134,7 @@ regFit.cox.GL <- function(DF, engine, stdErr) {
   Y <- rep(DF$time2[event == 0], mt + 1)
   X0 <- X[event == 0,,drop = FALSE]
   fit.coxph <- coxph(Surv(T[event == 0], DF$terminal[event == 0]) ~ X0)
-  cumHaz <- basehaz(fit.coxph)
+  cumHaz <- basehaz(fit.coxph, centered = FALSE)
   ## cumHaz$hazard <- cumHaz$hazard / max(cumHaz$hazard)
   wgt <- sapply(exp(X0 %*% coef(fit.coxph)), function(x)
     approxfun(cumHaz$time, exp(-cumHaz$hazard * x), yleft = 1,
@@ -148,6 +150,12 @@ regFit.cox.GL <- function(DF, engine, stdErr) {
   out <- list(par1 = out$par,
               par3 = coef(fit.coxph),
               par3.se = sqrt(diag(vcov(fit.coxph))))
+  T0 <- sort(unique(c(T, Y)))  
+  Lam0 <- coxGLRate(out$par1,
+                    X = as.matrix(X[!event, ]),
+                    Y = Y[!event], T = ifelse(T == Y, 1e5, T),
+                    cl = mt + 1, wgt = wgt, T0)
+  out$Lam0 <- function(x) approx(x = T0, y = Lam0, xout = x, yleft = 0)$y
   out$typeRec <- engine@typeRec
   out$typeTem <- engine@typeTem
   return(out)
@@ -677,7 +685,7 @@ setMethod("regFit", signature(engine = "am.GL", stdErr = "sand"),
 #' @references Xu, G., Chiou, S.H., Yan, J., Marr, K., and Huang, C.-Y. (2019). Generalized Scale-Change Models for Recurrent Event
 #' Processes under Informative Censoring. \emph{Statistica Sinica}, \bold{30}: 1773--1795.
 #' @references Huang, M.-Y. and Huang, C.-Y. (2022). Improved semiparametric estimation of the proportional rate model with recurrent event data.
-#' \emph{In revision}.
+#' \emph{Biometrics}, \bold{79} 3: 1686--1700.
 #'
 #' @importFrom stats approxfun optim model.response 
 #' @importFrom stats .getXlevels 
@@ -1046,6 +1054,21 @@ coxGLeq <- function(beta, X, Y, T, cl, wgt) {
      as.integer(length(T)), as.integer(cl), as.integer(c(0, cumsum(cl)[-length(cl)])),
      as.integer(nrow(X)), as.integer(p),        
      out = double(p), PACKAGE = "reReg")$out       
+}
+
+#' R function for equation 9 of Ghosh & Lin (2002);
+#' Baseilne Rate function
+#'
+#' @keywords internal
+#' @noRd
+coxGLRate <- function(beta, X, Y, T, cl, wgt, T0) {
+  p <- ncol(X)
+  res <- vector("double", p)
+  xb <- exp(X %*% beta)
+  .C("glCoxRate", as.double(T), as.double(Y), as.double(xb), as.double(wgt),
+     as.double(T0), as.integer(length(T0)), as.integer(length(T)),      
+     as.integer(cl), as.integer(c(0, cumsum(cl)[-length(cl)])),
+     as.integer(nrow(X)), out = double(length(T0)), PACKAGE = "reReg")$out
 }
 
 ## varOut <- function(dat, na.rm = TRUE) {
